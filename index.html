@@ -295,17 +295,23 @@ const INITIAL_ENTRIES = [
 
 // ━━━━ Backend sync helpers ━━━━
 async function fetchEntries() {
-  if (!BACKEND_URL) return null;
+  if (!BACKEND_URL) return { connected: false, data: null };
   try {
     var res = await fetch(BACKEND_URL);
     var data = await res.json();
-    return data.length > 0 ? data : null;
-  } catch(e) { console.log('Backend fetch failed, using local data:', e); return null; }
+    return { connected: true, data: data.length > 0 ? data : null };
+  } catch(e) { console.log('Backend fetch failed, using local data:', e); return { connected: false, data: null }; }
+}
+async function seedBackend(entries) {
+  if (!BACKEND_URL) return;
+  for (var i = 0; i < entries.length; i++) {
+    try { await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action:'add', entry:entries[i]}) }); } catch(e) {}
+  }
 }
 async function postAction(action, payload) {
   if (!BACKEND_URL) return;
   try {
-    await fetch(BACKEND_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({action,...payload}), mode:'no-cors' });
+    await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action,...payload}) });
   } catch(e) { console.log('Backend post failed:', e); }
 }
 
@@ -467,8 +473,14 @@ function App() {
   useEffect(() => {document.body.className = dark ? "dark" : ""},[dark]);
   useEffect(() => {
     if(BACKEND_URL){
-      fetchEntries().then((data) => {
-        if(data){setEntries(data);setSynced(true)}
+      fetchEntries().then((result) => {
+        setSynced(result.connected);
+        if(result.data){
+          setEntries(result.data);
+        } else if(result.connected) {
+          // Sheet is connected but empty — seed it with starter entries
+          seedBackend(INITIAL_ENTRIES);
+        }
         setLoading(false);
       });
     }
