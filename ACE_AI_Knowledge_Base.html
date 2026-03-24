@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ACE AI Knowledge Base</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  pre { tab-size: 2; }
+  /* Custom teal shades since Tailwind CDN may not have all */
+  .bg-teal-700 { background-color: #00897B; }
+  .bg-teal-600 { background-color: #00897B; }
+  .from-teal-700 { --tw-gradient-from: #00695C; }
+  .via-teal-600 { --tw-gradient-stops: var(--tw-gradient-from), #00897B, var(--tw-gradient-to, transparent); }
+  .to-emerald-600 { --tw-gradient-to: #059669; }
+  .text-teal-100 { color: #b2dfdb; }
+  .text-teal-200 { color: #80cbc4; }
+  .text-teal-600 { color: #00897B; }
+  .text-teal-700 { color: #00796B; }
+  .text-teal-800 { color: #00695C; }
+  .bg-teal-50 { background-color: #e0f2f1; }
+  .bg-teal-100 { background-color: #b2dfdb; }
+  .hover\:bg-teal-50:hover { background-color: #e0f2f1; }
+  .hover\:bg-teal-100:hover { background-color: #b2dfdb; }
+  .hover\:bg-teal-700:hover { background-color: #00796B; }
+  .hover\:text-teal-700:hover { color: #00796B; }
+  .hover\:text-teal-800:hover { color: #00695C; }
+  .hover\:text-teal-900:hover { color: #004D40; }
+  .hover\:border-teal-300:hover { border-color: #80cbc4; }
+  .focus\:ring-teal-500:focus { --tw-ring-color: #009688; }
+  .focus\:border-teal-500:focus { border-color: #009688; }
+  .border-emerald-200 { border-color: #a7f3d0; }
+  .bg-emerald-50 { background-color: #ecfdf5; }
+  .text-emerald-700 { color: #047857; }
+  .text-emerald-800 { color: #065f46; }
+  .bg-emerald-100 { background-color: #d1fae5; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const CATEGORIES = {
+  prompt: { label: "Prompt", color: "bg-green-100 text-green-800", icon: "\u{1F4AC}" },
+  skill: { label: "Skill", color: "bg-purple-100 text-purple-800", icon: "\u26A1" },
+  guide: { label: "Guide", color: "bg-blue-100 text-blue-800", icon: "\u{1F4D6}" },
+  example: { label: "Example", color: "bg-yellow-100 text-yellow-800", icon: "\u{1F50D}" },
+};
+
+const TAGS = [
+  "Research", "Writing", "Data Analysis", "Grant Applications",
+  "Charity Evaluation", "Communications", "Operations", "Fundraising",
+  "Report Writing", "Getting Started", "Advanced", "Spreadsheets",
+  "Presentations", "Email", "Strategy", "Animal Welfare"
+];
+
+const INITIAL_ENTRIES = [
+  {
+    id: 1,
+    title: "Charity Evaluation Research Prompt",
+    category: "prompt",
+    tags: ["Research", "Charity Evaluation", "Animal Welfare"],
+    author: "Ethan E.",
+    date: "2026-03-23",
+    rating: 5,
+    description: "A structured prompt for having Claude help analyze a charity's programs, evidence base, and cost-effectiveness.",
+    content: "You are helping evaluate an animal charity. I'll provide information about the charity and I need you to help me analyze it across these dimensions:\n\n1. **Programs & Interventions**: What does the charity do? How evidence-based are their approaches?\n2. **Cost-Effectiveness**: Based on the data provided, how cost-effective are their programs compared to benchmarks?\n3. **Room for More Funding**: Can they productively use additional funds?\n4. **Track Record**: What have they accomplished historically?\n5. **Transparency**: How open are they about their methods and results?\n\nFor each dimension, provide:\n- A summary of key findings\n- Strengths and weaknesses\n- Questions we should follow up on\n- A preliminary rating (Strong / Moderate / Weak / Insufficient Data)\n\nCharity information:\n[PASTE CHARITY INFO HERE]",
+    tips: "Works best when you paste in a charity's annual report, website content, or program descriptions. You can also upload PDFs directly into Cowork.",
+    whatWorked: "Really effective for getting a structured first-pass analysis. Saves hours of initial review time.",
+    whatDidnt: "Sometimes rates charities too generously \u2014 always cross-check the 'Strengths' section critically."
+  },
+  {
+    id: 2,
+    title: "Grant Application Drafter",
+    category: "prompt",
+    tags: ["Grant Applications", "Writing", "Fundraising"],
+    author: "Team",
+    date: "2026-03-20",
+    rating: 4,
+    description: "Template prompt for drafting grant applications with ACE's voice and evidence-based framing.",
+    content: "I'm writing a grant application for Animal Charity Evaluators. Here's what I need:\n\n**Funder**: [NAME]\n**Grant program**: [PROGRAM NAME]\n**Amount requesting**: [AMOUNT]\n**Project**: [BRIEF DESCRIPTION]\n\nPlease help me draft the application following these guidelines:\n- Use an evidence-based, measured tone (not hyperbolic)\n- Cite specific data and outcomes where I provide them\n- Emphasize our methodology and rigor\n- Frame animal welfare impact in terms the funder's priorities align with\n- Keep language accessible but professional\n\nApplication questions:\n[PASTE QUESTIONS HERE]\n\nBackground materials:\n[PASTE OR DESCRIBE RELEVANT ACE REPORTS/DATA]",
+    tips: "Upload the funder's guidelines as a PDF so Claude can tailor the language to their priorities.",
+    whatWorked: "Great for first drafts. The evidence-based framing prompt keeps Claude from being too salesy.",
+    whatDidnt: "You'll need to add specific internal data and examples \u2014 Claude can't access our databases."
+  },
+  {
+    id: 3,
+    title: "Getting Started with Claude Cowork",
+    category: "guide",
+    tags: ["Getting Started", "Operations"],
+    author: "Ethan E.",
+    date: "2026-03-23",
+    rating: 5,
+    description: "A beginner's guide to setting up and using Claude Cowork for everyday ACE work.",
+    content: "## Quick Start Guide\n\n### What is Cowork?\nCowork is Claude's desktop mode \u2014 it can read your files, create documents, browse the web, and run code, all from a chat interface.\n\n### First Steps\n1. **Select a folder**: When you start a session, select the folder you want to work in. Claude can read and create files there.\n2. **Upload files**: Drag and drop files into the chat, or reference files in your selected folder.\n3. **Be specific**: The more context you give, the better. Instead of \"summarize this,\" try \"summarize this charity's key programs and their evidence base in 3 paragraphs for our blog.\"\n\n### What Works Well For ACE\n- **Document creation**: Ask Claude to create Word docs, spreadsheets, presentations, or PDFs\n- **Research synthesis**: Upload multiple papers/reports and ask Claude to find themes\n- **Data analysis**: Upload CSVs or Excel files for analysis\n- **Editing & feedback**: Paste draft text and ask for specific improvements\n\n### Tips\n- Use \"skills\" (type /skills) to see specialized capabilities like Excel, PowerPoint, etc.\n- You can ask Claude to search the web for current information\n- For sensitive data, remember Claude runs locally on your computer \u2014 files don't leave your machine\n- Save useful prompts to this knowledge base so the team can reuse them!",
+    tips: "Share this with new team members on their first day using Cowork.",
+    whatWorked: "Having a simple onboarding doc dramatically reduced questions in Slack.",
+    whatDidnt: ""
+  },
+  {
+    id: 4,
+    title: "Data Cleaning & Analysis Skill",
+    category: "skill",
+    tags: ["Data Analysis", "Spreadsheets", "Advanced"],
+    author: "Team",
+    date: "2026-03-18",
+    rating: 4,
+    description: "A reusable approach for cleaning messy survey or program data in Excel/CSV format using Cowork.",
+    content: "## How to Use This\n\n1. Open Cowork and select the folder containing your data file\n2. Use this prompt:\n\n\"Please analyze [FILENAME] and:\n- Show me the first 10 rows and column summary\n- Identify any data quality issues (missing values, inconsistent formats, outliers)\n- Suggest a cleaning plan\n- After I approve, clean the data and save a new file\"\n\n3. Review Claude's cleaning plan before approving\n4. Claude will create a cleaned version of your file\n\n## Common Data Tasks This Handles\n- Standardizing country/region names in survey data\n- Fixing date format inconsistencies\n- Removing duplicate entries\n- Filling or flagging missing values\n- Converting between units\n- Merging multiple data sources",
+    tips: "Always ask Claude to show you a sample of changes before applying them to the whole dataset.",
+    whatWorked: "Saved about 4 hours on our last donor survey cleanup. Claude caught formatting issues I'd have missed.",
+    whatDidnt: "For very large files (100k+ rows), it can be slow. Consider splitting the file first."
+  },
+  {
+    id: 5,
+    title: "Blog Post / Communications Writer",
+    category: "prompt",
+    tags: ["Writing", "Communications"],
+    author: "Team",
+    date: "2026-03-15",
+    rating: 4,
+    description: "Prompt for drafting blog posts and communications in ACE's voice.",
+    content: "I need to write a blog post for Animal Charity Evaluators. Here are the details:\n\n**Topic**: [TOPIC]\n**Target audience**: [donors / animal advocates / charity professionals / general public]\n**Desired length**: [word count]\n**Key points to cover**: [LIST]\n**Tone**: Professional but accessible, evidence-based, compassionate without being preachy\n\nStyle guidelines for ACE content:\n- Lead with data and evidence, not emotion\n- Acknowledge uncertainty and complexity\n- Avoid absolutist claims\n- Use \"animal welfare\" and \"animal advocacy\" rather than \"animal rights\" unless specifically discussing rights-based approaches\n- Include concrete examples where possible\n- End with clear takeaways or calls to action\n\nDraft the post, then provide:\n1. 3 alternative headline options\n2. A suggested meta description (155 characters)\n3. Any claims that need fact-checking or citations",
+    tips: "Upload our style guide PDF if you have it handy \u2014 Claude will follow it closely.",
+    whatWorked: "The 'claims that need fact-checking' output is incredibly useful for our review process.",
+    whatDidnt: "Sometimes adopts a slightly generic nonprofit tone. Adding a sample of our previous posts helps a lot."
+  },
+  {
+    id: 6,
+    title: "Meeting Notes to Action Items",
+    category: "prompt",
+    tags: ["Operations", "Getting Started"],
+    author: "Team",
+    date: "2026-03-12",
+    rating: 5,
+    description: "Convert messy meeting notes into structured summaries with clear action items and owners.",
+    content: "Here are notes from our team meeting. Please organize them into:\n\n## Meeting Summary\nA 2-3 sentence overview of what was discussed.\n\n## Key Decisions\nBullet each decision that was made.\n\n## Action Items\nA table with columns: Action Item | Owner | Deadline | Priority (High/Medium/Low)\n\n## Open Questions\nAnything that was raised but not resolved.\n\n## Follow-ups for Next Meeting\nTopics that need to be revisited.\n\nMeeting notes:\n[PASTE NOTES HERE]",
+    tips: "Works great even with very rough/messy notes. You can also upload a voice recording transcript.",
+    whatWorked: "The action items table is immediately usable \u2014 we paste it right into Asana.",
+    whatDidnt: "If multiple people share the same name initial in notes, Claude sometimes assigns actions to the wrong person. Use full names."
+  },
+  {
+    id: 7,
+    title: "Spreadsheet Report Generator",
+    category: "example",
+    tags: ["Spreadsheets", "Data Analysis", "Report Writing"],
+    author: "Team",
+    date: "2026-03-10",
+    rating: 4,
+    description: "Example of using Cowork to turn raw data into a formatted Excel report with charts.",
+    content: "## What We Did\n\nWe had a CSV of charity evaluation scores across 30 organizations and needed to create a presentation-ready Excel report.\n\n## The Prompt That Worked\n\n\"I've uploaded charity_scores_2025.csv. Please create a formatted Excel report that includes:\n1. A summary dashboard sheet with key stats (average scores by category, top/bottom performers)\n2. A detailed scores sheet with conditional formatting (green/yellow/red for score ranges)\n3. A chart sheet with a bar chart of overall scores ranked highest to lowest\n4. Use our standard categories: Programs, Cost-Effectiveness, Room for Funding, Track Record, Transparency\nFormat it professionally with ACE branding colors (use teal #00897B as the primary color).\"\n\n## Result\nClaude created a 4-sheet Excel workbook in about 2 minutes. The conditional formatting and charts were immediately usable in our board presentation.\n\n## What We Learned\n- Specifying exact colors and formatting upfront saves iteration\n- Asking for a \"dashboard sheet\" triggers Claude to create summary statistics automatically\n- The /xlsx skill activates specialized Excel capabilities",
+    tips: "Always specify your brand colors in hex codes for consistent formatting.",
+    whatWorked: "The multi-sheet approach with a dashboard was exactly what the board wanted.",
+    whatDidnt: "First attempt had the chart axes flipped \u2014 be explicit about orientation."
+  },
+  {
+    id: 8,
+    title: "Research Literature Review Helper",
+    category: "prompt",
+    tags: ["Research", "Animal Welfare", "Advanced"],
+    author: "Team",
+    date: "2026-03-08",
+    rating: 4,
+    description: "Systematically review uploaded research papers and synthesize findings on animal welfare topics.",
+    content: "I'm conducting a literature review on [TOPIC] for ACE. I'll upload several papers/reports.\n\nFor each document, please extract:\n1. **Citation**: Author(s), year, title, publication\n2. **Research question**: What did they study?\n3. **Methodology**: How did they study it? (sample size, methods)\n4. **Key findings**: Main results (with specific numbers where available)\n5. **Relevance to ACE**: How does this inform our charity evaluations?\n6. **Limitations**: What are the weaknesses?\n7. **Quality rating**: High / Medium / Low methodological rigor\n\nAfter reviewing all documents, provide:\n- A synthesis of common themes and contradictions\n- Evidence gaps we should note\n- Implications for our evaluation criteria\n- Suggested follow-up questions or research needs",
+    tips: "Upload PDFs directly \u2014 Cowork can read them. For best results, do 3-5 papers at a time rather than all at once.",
+    whatWorked: "The structured extraction format makes it easy to compare across studies. We used this for our farmed fish welfare review.",
+    whatDidnt: "Claude occasionally misreads tables in PDFs. Verify any specific statistics it extracts."
+  },
+  {
+    id: 9,
+    title: "Creating Presentations in Cowork",
+    category: "guide",
+    tags: ["Presentations", "Getting Started"],
+    author: "Team",
+    date: "2026-03-05",
+    rating: 4,
+    description: "How to get Claude to create great PowerPoint presentations for ACE needs.",
+    content: "## Overview\nCowork can create full .pptx presentations. Here's how to get the best results.\n\n## Steps\n1. Start by telling Claude what the presentation is for (board meeting, conference talk, donor update, etc.)\n2. Specify: number of slides, audience, key messages, and any data to include\n3. Upload any source documents (reports, data files) you want content pulled from\n4. Ask Claude to create the .pptx file\n\n## Example Prompt\n\"Create a 12-slide PowerPoint presentation for our Q1 2026 board meeting. Include:\n- Title slide with ACE branding (teal #00897B, white text)\n- Q1 highlights (I'll provide bullet points below)\n- Financial overview (upload: q1_financials.xlsx)\n- Charity evaluation updates\n- Upcoming priorities\n- Q&A slide\nUse a clean, modern design. Keep text minimal \u2014 we'll speak to the details.\"\n\n## Pro Tips\n- Give Claude your brand colors and font preferences upfront\n- \"Minimal text, more visuals\" produces better slides than content-heavy ones\n- You can iterate: \"Make slide 4 more visual\" or \"Add speaker notes to all slides\"\n- Upload your existing template .pptx and ask Claude to match its style",
+    tips: "Keep each slide to one key message. Ask Claude to add speaker notes with the details.",
+    whatWorked: "Board presentations went from 3 hours to create to about 30 minutes of iteration with Claude.",
+    whatDidnt: "Complex layouts with multiple images sometimes need manual adjustment in PowerPoint."
+  },
+  {
+    id: 10,
+    title: "Donor Email Personalization",
+    category: "example",
+    tags: ["Email", "Fundraising", "Communications"],
+    author: "Team",
+    date: "2026-03-01",
+    rating: 3,
+    description: "Example of using Cowork to draft personalized donor communications while maintaining ACE's voice.",
+    content: "## The Task\nWe needed to draft personalized thank-you and update emails for 15 major donors, each referencing their specific giving history and interests.\n\n## What We Did\n1. Uploaded a spreadsheet with donor names, giving amounts, interest areas, and last interaction dates\n2. Used this prompt:\n\n\"Using the donor spreadsheet I uploaded, draft a personalized email for each donor. Each email should:\n- Thank them for their specific contribution\n- Reference their interest area with a relevant recent ACE update\n- Be warm but professional (not overly casual)\n- Include one specific impact metric relevant to their interest\n- Be 150-200 words\n- End with a soft ask for continued engagement (not a direct donation request)\n\nSave all emails in a single Word document with clear headers for each donor.\"\n\n## Result\nClaude created 15 personalized drafts in a Word doc. About 80% needed only minor edits before sending.\n\n## Lessons\n- Having the spreadsheet structured well (clear column headers) made a big difference\n- We added \"Do NOT fabricate any statistics\" to the prompt after the first attempt included a made-up metric",
+    tips: "Always fact-check any numbers or statistics in generated donor communications.",
+    whatWorked: "Saved about a full day of writing. The personalization was surprisingly good.",
+    whatDidnt: "A few emails were too similar in structure \u2014 add 'vary the opening and structure across emails' to the prompt."
+  },
+  {
+    id: 11,
+    title: "Prompt Engineering Best Practices",
+    category: "guide",
+    tags: ["Getting Started", "Advanced"],
+    author: "Ethan E.",
+    date: "2026-03-23",
+    rating: 5,
+    description: "Key principles for writing effective prompts that get better results from Claude in Cowork.",
+    content: "## Core Principles\n\n### 1. Be Specific About What You Want\nBad: \"Summarize this report\"\nGood: \"Summarize this charity evaluation report in 3 paragraphs, focusing on cost-effectiveness findings, for an audience of potential donors\"\n\n### 2. Provide Context\nTell Claude:\n- Who the output is for (board, donors, team, public)\n- What format you need (bullet points, prose, table, document)\n- What tone to use (formal, conversational, academic)\n- Any constraints (word count, deadline context)\n\n### 3. Show, Don't Just Tell\nIf you want a specific style, paste an example of good output rather than describing it.\n\n### 4. Use Step-by-Step for Complex Tasks\nBreak big requests into numbered steps. \"First analyze X, then compare with Y, then recommend Z.\"\n\n### 5. Ask Claude to Think Before Answering\nFor complex analysis: \"Before giving your answer, think through the key considerations and trade-offs.\"\n\n### 6. Iterate, Don't Start Over\nIf the first response is 70% right, tell Claude what to change rather than re-prompting from scratch.\n\n### 7. Upload, Don't Paste (When Possible)\nFor documents, PDFs, and spreadsheets, uploading the file gives Claude better context than pasting excerpted text.\n\n### 8. Specify What NOT to Do\n\"Don't include jargon\" or \"Don't make claims we can't verify\" can be as useful as positive instructions.",
+    tips: "Print this out and keep it by your desk for the first few weeks.",
+    whatWorked: "Team members who followed these principles consistently got better results and needed fewer iterations.",
+    whatDidnt: ""
+  },
+  {
+    id: 12,
+    title: "Competitive Landscape Analysis",
+    category: "prompt",
+    tags: ["Research", "Strategy", "Animal Welfare"],
+    author: "Team",
+    date: "2026-02-25",
+    rating: 3,
+    description: "Prompt for analyzing the animal charity/advocacy landscape and identifying gaps or opportunities.",
+    content: "I'd like to analyze the current landscape of [SPECIFIC AREA, e.g., \"farmed animal welfare organizations in Southeast Asia\"].\n\nPlease help me create a structured analysis covering:\n\n1. **Key Organizations**: Who are the major players? What do they focus on?\n2. **Approaches**: What intervention strategies are being used?\n3. **Evidence Base**: Which approaches have the strongest evidence?\n4. **Geographic Coverage**: Where are efforts concentrated? Where are gaps?\n5. **Funding Landscape**: What do we know about funding levels and sources?\n6. **Gaps & Opportunities**: Where is there unmet need or opportunity for high-impact work?\n7. **Trends**: What direction is the space moving?\n\nUse web search to find current information. For each claim, note whether it's from a published source or your general knowledge.\n\nFormat as a report I could share with our research team.",
+    tips: "Claude can search the web, but always verify specific claims about organizations \u2014 information can be outdated.",
+    whatWorked: "Good for getting a first-draft landscape overview. The 'gaps and opportunities' section was genuinely insightful.",
+    whatDidnt: "Web search sometimes returns outdated org info. Cross-reference with our internal databases."
+  }
+];
+
+function StarRating({ rating }) {
+  return (
+    <div style={{display:'flex', gap:'2px'}}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span key={star} style={{fontSize:'14px', color: star <= rating ? '#f59e0b' : '#d1d5db'}}>
+          \u2605
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function EntryCard({ entry, onClick }) {
+  const cat = CATEGORIES[entry.category];
+  return (
+    <div
+      onClick={() => onClick(entry)}
+      style={{
+        background: 'white', borderRadius: '12px', border: '1px solid #e5e7eb',
+        padding: '20px', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '12px',
+        transition: 'all 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}
+      onMouseOver={e => { e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)'; e.currentTarget.style.borderColor = '#80cbc4'; }}
+      onMouseOut={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'; e.currentTarget.style.borderColor = '#e5e7eb'; }}
+    >
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start'}}>
+        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+          <span style={{fontSize:'20px'}}>{cat.icon}</span>
+          <span className={cat.color} style={{fontSize:'12px', fontWeight:600, padding:'4px 10px', borderRadius:'20px'}}>{cat.label}</span>
+        </div>
+        <StarRating rating={entry.rating} />
+      </div>
+      <h3 style={{fontWeight:700, color:'#111827', fontSize:'17px', lineHeight:1.3, margin:0}}>{entry.title}</h3>
+      <p className="line-clamp-2" style={{color:'#6b7280', fontSize:'14px', lineHeight:1.5, margin:0}}>{entry.description}</p>
+      <div style={{display:'flex', flexWrap:'wrap', gap:'6px', marginTop:'auto'}}>
+        {entry.tags.slice(0, 3).map((tag) => (
+          <span key={tag} style={{fontSize:'11px', background:'#f3f4f6', color:'#6b7280', padding:'2px 8px', borderRadius:'20px'}}>{tag}</span>
+        ))}
+        {entry.tags.length > 3 && (
+          <span style={{fontSize:'11px', color:'#9ca3af'}}>+{entry.tags.length - 3}</span>
+        )}
+      </div>
+      <div style={{display:'flex', justifyContent:'space-between', fontSize:'12px', color:'#9ca3af', paddingTop:'8px', borderTop:'1px solid #f3f4f6'}}>
+        <span>{entry.author}</span>
+        <span>{entry.date}</span>
+      </div>
+    </div>
+  );
+}
+
+function EntryDetail({ entry, onBack }) {
+  const cat = CATEGORIES[entry.category];
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(entry.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div style={{maxWidth:'900px', margin:'0 auto'}}>
+      <button onClick={onBack} style={{display:'flex', alignItems:'center', gap:'8px', color:'#00897B', background:'none', border:'none', cursor:'pointer', fontWeight:500, fontSize:'15px', marginBottom:'24px', padding:0}}>
+        \u2190 Back to all entries
+      </button>
+      <div style={{background:'white', borderRadius:'12px', border:'1px solid #e5e7eb', overflow:'hidden'}}>
+        <div style={{background:'linear-gradient(135deg, #00695C, #00897B, #059669)', padding:'28px', color:'white'}}>
+          <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'12px'}}>
+            <span style={{fontSize:'28px'}}>{cat.icon}</span>
+            <span style={{fontSize:'13px', fontWeight:600, background:'rgba(255,255,255,0.2)', padding:'4px 14px', borderRadius:'20px'}}>{cat.label}</span>
+            <StarRating rating={entry.rating} />
+          </div>
+          <h2 style={{fontSize:'26px', fontWeight:700, margin:'0 0 8px 0'}}>{entry.title}</h2>
+          <p style={{color:'#b2dfdb', margin:'0 0 16px 0', fontSize:'15px'}}>{entry.description}</p>
+          <div style={{display:'flex', gap:'16px', fontSize:'14px', color:'#80cbc4'}}>
+            <span>By {entry.author}</span>
+            <span>\u2022</span>
+            <span>{entry.date}</span>
+          </div>
+        </div>
+
+        <div style={{padding:'28px', display:'flex', flexDirection:'column', gap:'24px'}}>
+          <div style={{display:'flex', flexWrap:'wrap', gap:'8px'}}>
+            {entry.tags.map((tag) => (
+              <span key={tag} style={{fontSize:'13px', background:'#e0f2f1', color:'#00796B', padding:'4px 14px', borderRadius:'20px', fontWeight:500}}>{tag}</span>
+            ))}
+          </div>
+
+          <div>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px'}}>
+              <h3 style={{fontWeight:700, color:'#111827', fontSize:'18px', margin:0}}>
+                {entry.category === "prompt" ? "Prompt Template" : entry.category === "skill" ? "Instructions" : "Content"}
+              </h3>
+              <button onClick={handleCopy} style={{fontSize:'13px', background:'#e0f2f1', color:'#00796B', padding:'8px 16px', borderRadius:'8px', fontWeight:500, border:'none', cursor:'pointer'}}>
+                {copied ? "Copied!" : "Copy to Clipboard"}
+              </button>
+            </div>
+            <pre style={{background:'#f9fafb', border:'1px solid #e5e7eb', borderRadius:'8px', padding:'16px', fontSize:'13px', color:'#374151', whiteSpace:'pre-wrap', fontFamily:'monospace', lineHeight:1.6, overflowX:'auto', margin:0}}>
+              {entry.content}
+            </pre>
+          </div>
+
+          {entry.tips && (
+            <div style={{background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:'8px', padding:'16px'}}>
+              <h4 style={{fontWeight:700, color:'#1e40af', margin:'0 0 4px 0', fontSize:'14px'}}>\u{1F4A1} Tips</h4>
+              <p style={{color:'#1d4ed8', fontSize:'14px', margin:0}}>{entry.tips}</p>
+            </div>
+          )}
+
+          <div style={{display:'grid', gridTemplateColumns: entry.whatWorked && entry.whatDidnt ? '1fr 1fr' : '1fr', gap:'16px'}}>
+            {entry.whatWorked && (
+              <div style={{background:'#ecfdf5', border:'1px solid #a7f3d0', borderRadius:'8px', padding:'16px'}}>
+                <h4 style={{fontWeight:700, color:'#065f46', margin:'0 0 4px 0', fontSize:'14px'}}>\u2705 What Worked</h4>
+                <p style={{color:'#047857', fontSize:'14px', margin:0}}>{entry.whatWorked}</p>
+              </div>
+            )}
+            {entry.whatDidnt && (
+              <div style={{background:'#fef2f2', border:'1px solid #fecaca', borderRadius:'8px', padding:'16px'}}>
+                <h4 style={{fontWeight:700, color:'#991b1b', margin:'0 0 4px 0', fontSize:'14px'}}>\u26A0\uFE0F What Didn't Work</h4>
+                <p style={{color:'#b91c1c', fontSize:'14px', margin:0}}>{entry.whatDidnt}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AddEntryForm({ onSubmit, onCancel }) {
+  const [form, setForm] = useState({
+    title: "", category: "prompt", description: "", content: "",
+    tips: "", whatWorked: "", whatDidnt: "", tags: [], author: "", rating: 4,
+  });
+  const [tagInput, setTagInput] = useState("");
+
+  const addTag = () => {
+    if (tagInput.trim() && !form.tags.includes(tagInput.trim())) {
+      setForm({ ...form, tags: [...form.tags, tagInput.trim()] });
+      setTagInput("");
+    }
+  };
+
+  const removeTag = (tag) => setForm({ ...form, tags: form.tags.filter((t) => t !== tag) });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.title || !form.content) return;
+    onSubmit({ ...form, id: Date.now(), date: new Date().toISOString().split("T")[0] });
+  };
+
+  const inputStyle = {width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 16px', fontSize:'14px', outline:'none', boxSizing:'border-box'};
+  const labelStyle = {display:'block', fontSize:'13px', fontWeight:600, color:'#374151', marginBottom:'4px'};
+
+  return (
+    <div style={{maxWidth:'700px', margin:'0 auto'}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'24px'}}>
+        <h2 style={{fontSize:'24px', fontWeight:700, color:'#111827', margin:0}}>Add New Entry</h2>
+        <button onClick={onCancel} style={{color:'#6b7280', background:'none', border:'none', cursor:'pointer', fontWeight:500, fontSize:'14px'}}>Cancel</button>
+      </div>
+      <form onSubmit={handleSubmit} style={{background:'white', borderRadius:'12px', border:'1px solid #e5e7eb', padding:'28px', display:'flex', flexDirection:'column', gap:'20px'}}>
+        <div>
+          <label style={labelStyle}>Title *</label>
+          <input type="text" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={inputStyle} placeholder="Give your entry a descriptive title" />
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px'}}>
+          <div>
+            <label style={labelStyle}>Category *</label>
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} style={{...inputStyle, background:'white'}}>
+              {Object.entries(CATEGORIES).map(([key, val]) => (
+                <option key={key} value={key}>{val.icon} {val.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Your Name</label>
+            <input type="text" value={form.author} onChange={(e) => setForm({ ...form, author: e.target.value })} style={inputStyle} placeholder="e.g., Jane D." />
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>Short Description *</label>
+          <input type="text" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={inputStyle} placeholder="One-line summary of what this is" />
+        </div>
+        <div>
+          <label style={labelStyle}>Content / Prompt Template *</label>
+          <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} style={{...inputStyle, fontFamily:'monospace'}} placeholder="Paste your prompt, instructions, or write-up here..." />
+        </div>
+        <div>
+          <label style={labelStyle}>Tags</label>
+          <div style={{display:'flex', gap:'8px', marginBottom:'8px'}}>
+            <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), addTag())} style={{...inputStyle, flex:1}} placeholder="Type a tag and press Enter" />
+            <button type="button" onClick={addTag} style={{background:'#00897B', color:'white', padding:'10px 16px', borderRadius:'8px', fontSize:'13px', fontWeight:500, border:'none', cursor:'pointer', whiteSpace:'nowrap'}}>Add</button>
+          </div>
+          <div style={{display:'flex', flexWrap:'wrap', gap:'6px', marginBottom:'8px'}}>
+            {TAGS.filter((t) => !form.tags.includes(t)).slice(0, 8).map((tag) => (
+              <button key={tag} type="button" onClick={() => setForm({ ...form, tags: [...form.tags, tag] })} style={{fontSize:'12px', background:'#f3f4f6', color:'#6b7280', padding:'4px 10px', borderRadius:'20px', border:'none', cursor:'pointer'}}>+ {tag}</button>
+            ))}
+          </div>
+          <div style={{display:'flex', flexWrap:'wrap', gap:'6px'}}>
+            {form.tags.map((tag) => (
+              <span key={tag} style={{fontSize:'12px', background:'#b2dfdb', color:'#00796B', padding:'4px 10px', borderRadius:'20px', display:'flex', alignItems:'center', gap:'4px'}}>
+                {tag} <button type="button" onClick={() => removeTag(tag)} style={{background:'none', border:'none', cursor:'pointer', color:'#00796B', fontSize:'14px', padding:0}}>\u00D7</button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>Tips for Others</label>
+          <textarea value={form.tips} onChange={(e) => setForm({ ...form, tips: e.target.value })} rows={2} style={inputStyle} placeholder="Any tips for getting the best results?" />
+        </div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px'}}>
+          <div>
+            <label style={labelStyle}>What Worked Well</label>
+            <textarea value={form.whatWorked} onChange={(e) => setForm({ ...form, whatWorked: e.target.value })} rows={2} style={inputStyle} placeholder="What results did you get?" />
+          </div>
+          <div>
+            <label style={labelStyle}>What Didn't Work</label>
+            <textarea value={form.whatDidnt} onChange={(e) => setForm({ ...form, whatDidnt: e.target.value })} rows={2} style={inputStyle} placeholder="Any gotchas or limitations?" />
+          </div>
+        </div>
+        <div>
+          <label style={labelStyle}>Rating</label>
+          <div style={{display:'flex', gap:'8px'}}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button key={n} type="button" onClick={() => setForm({ ...form, rating: n })} style={{fontSize:'28px', background:'none', border:'none', cursor:'pointer', color: n <= form.rating ? '#f59e0b' : '#d1d5db', padding:0}}>\u2605</button>
+            ))}
+          </div>
+        </div>
+        <button type="submit" style={{width:'100%', background:'#00897B', color:'white', padding:'14px', borderRadius:'8px', fontWeight:600, fontSize:'14px', border:'none', cursor:'pointer'}}>
+          Add Entry to Knowledge Base
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function App() {
+  const [entries, setEntries] = useState(INITIAL_ENTRIES);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [tagFilter, setTagFilter] = useState("all");
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [sortBy, setSortBy] = useState("date");
+
+  const filtered = useMemo(() => {
+    let result = entries.filter((e) => {
+      const matchesSearch = !search || e.title.toLowerCase().includes(search.toLowerCase()) ||
+        e.description.toLowerCase().includes(search.toLowerCase()) ||
+        e.content.toLowerCase().includes(search.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || e.category === categoryFilter;
+      const matchesTag = tagFilter === "all" || e.tags.includes(tagFilter);
+      return matchesSearch && matchesCategory && matchesTag;
+    });
+    if (sortBy === "date") result.sort((a, b) => b.date.localeCompare(a.date));
+    else if (sortBy === "rating") result.sort((a, b) => b.rating - a.rating);
+    else if (sortBy === "title") result.sort((a, b) => a.title.localeCompare(b.title));
+    return result;
+  }, [entries, search, categoryFilter, tagFilter, sortBy]);
+
+  const handleAdd = (entry) => {
+    setEntries([entry, ...entries]);
+    setShowAddForm(false);
+  };
+
+  const usedTags = useMemo(() => [...new Set(entries.flatMap((e) => e.tags))].sort(), [entries]);
+
+  const stats = useMemo(() => ({
+    total: entries.length,
+    prompts: entries.filter((e) => e.category === "prompt").length,
+    skills: entries.filter((e) => e.category === "skill").length,
+    guides: entries.filter((e) => e.category === "guide").length,
+    examples: entries.filter((e) => e.category === "example").length,
+  }), [entries]);
+
+  const selectStyle = {border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 12px', fontSize:'14px', background:'white', outline:'none'};
+
+  if (selectedEntry) return (
+    <div style={{minHeight:'100vh', background:'#f9fafb', padding:'24px'}}>
+      <EntryDetail entry={selectedEntry} onBack={() => setSelectedEntry(null)} />
+    </div>
+  );
+
+  if (showAddForm) return (
+    <div style={{minHeight:'100vh', background:'#f9fafb', padding:'24px'}}>
+      <AddEntryForm onSubmit={handleAdd} onCancel={() => setShowAddForm(false)} />
+    </div>
+  );
+
+  return (
+    <div style={{minHeight:'100vh', background:'#f9fafb'}}>
+      {/* Header */}
+      <div style={{background:'linear-gradient(135deg, #00695C, #00897B, #059669)', color:'white'}}>
+        <div style={{maxWidth:'1200px', margin:'0 auto', padding:'32px 24px'}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:'16px'}}>
+            <div>
+              <div style={{display:'flex', alignItems:'center', gap:'12px', marginBottom:'8px'}}>
+                <div style={{width:'42px', height:'42px', background:'rgba(255,255,255,0.2)', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px'}}>{"\u{1F9E0}"}</div>
+                <h1 style={{fontSize:'28px', fontWeight:700, margin:0}}>ACE AI Knowledge Base</h1>
+              </div>
+              <p style={{color:'#b2dfdb', fontSize:'16px', margin:0}}>Shared prompts, skills, guides & examples for Claude Cowork</p>
+            </div>
+            <button onClick={() => setShowAddForm(true)} style={{background:'white', color:'#00796B', padding:'10px 20px', borderRadius:'8px', fontWeight:600, border:'none', cursor:'pointer', fontSize:'14px', boxShadow:'0 2px 4px rgba(0,0,0,0.1)'}}>
+              + Add Entry
+            </button>
+          </div>
+
+          {/* Stats */}
+          <div style={{display:'flex', gap:'20px', marginTop:'24px', flexWrap:'wrap'}}>
+            {[
+              { label: "Total", count: stats.total, bg: "rgba(255,255,255,0.2)" },
+              { label: "Prompts", count: stats.prompts, bg: "rgba(255,255,255,0.1)" },
+              { label: "Skills", count: stats.skills, bg: "rgba(255,255,255,0.1)" },
+              { label: "Guides", count: stats.guides, bg: "rgba(255,255,255,0.1)" },
+              { label: "Examples", count: stats.examples, bg: "rgba(255,255,255,0.1)" },
+            ].map((s) => (
+              <div key={s.label} style={{background:s.bg, borderRadius:'8px', padding:'8px 18px', textAlign:'center'}}>
+                <div style={{fontSize:'24px', fontWeight:700}}>{s.count}</div>
+                <div style={{fontSize:'11px', color:'#80cbc4'}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div style={{maxWidth:'1200px', margin:'0 auto', padding:'20px 24px'}}>
+        <div style={{background:'white', borderRadius:'12px', border:'1px solid #e5e7eb', padding:'16px', display:'flex', flexWrap:'wrap', gap:'12px', alignItems:'center'}}>
+          <div style={{flex:1, minWidth:'250px'}}>
+            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search prompts, skills, guides..."
+              style={{width:'100%', border:'1px solid #d1d5db', borderRadius:'8px', padding:'10px 16px', fontSize:'14px', outline:'none', boxSizing:'border-box'}} />
+          </div>
+          <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Categories</option>
+            {Object.entries(CATEGORIES).map(([key, val]) => (
+              <option key={key} value={key}>{val.icon} {val.label}</option>
+            ))}
+          </select>
+          <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} style={selectStyle}>
+            <option value="all">All Tags</option>
+            {usedTags.map((tag) => (
+              <option key={tag} value={tag}>{tag}</option>
+            ))}
+          </select>
+          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selectStyle}>
+            <option value="date">Newest First</option>
+            <option value="rating">Highest Rated</option>
+            <option value="title">A-Z</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div style={{maxWidth:'1200px', margin:'0 auto', padding:'0 24px 48px'}}>
+        <div style={{fontSize:'14px', color:'#6b7280', marginBottom:'16px'}}>{filtered.length} {filtered.length === 1 ? "entry" : "entries"} found</div>
+        {filtered.length === 0 ? (
+          <div style={{textAlign:'center', padding:'64px 0', color:'#9ca3af'}}>
+            <div style={{fontSize:'48px', marginBottom:'16px'}}>{"\u{1F50D}"}</div>
+            <p style={{fontSize:'18px', fontWeight:500, margin:'0 0 4px 0'}}>No entries match your filters</p>
+            <p style={{fontSize:'14px', margin:0}}>Try adjusting your search or filters</p>
+          </div>
+        ) : (
+          <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(340px, 1fr))', gap:'20px'}}>
+            {filtered.map((entry) => (
+              <EntryCard key={entry.id} entry={entry} onClick={setSelectedEntry} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{borderTop:'1px solid #e5e7eb', background:'white', padding:'16px 0'}}>
+        <div style={{maxWidth:'1200px', margin:'0 auto', padding:'0 24px', textAlign:'center', fontSize:'13px', color:'#9ca3af'}}>
+          Animal Charity Evaluators \u2014 AI Knowledge Base \u00B7 Updated {new Date().toLocaleDateString()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
