@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://script.google.com https://script.googleusercontent.com; img-src 'self' data:;">
 <title>ACE AI Knowledge Base</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -60,11 +61,15 @@ body{background:var(--bg);color:var(--text)}
 const { useState, useMemo, useEffect, useCallback } = React;
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CONFIGURATION: Paste your Google Apps Script URL here
+// CONFIGURATION: Paste your Google Apps Script URL and API key here
 // See Google_Apps_Script_Backend.js for setup instructions
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 const BACKEND_URL = 'https://script.google.com/a/macros/animalcharityevaluators.org/s/AKfycbyC2zpOSmnHckOtoGhf8PF0jvbFDB7laFEAj_AikozyzBFfWOfCPQhTusN9fZtM9nSqUw/exec';
+const API_KEY = '@!J]ZSCQ*{fP5qTGbl%s@x{LrK6-}u^H';  // Must match the API_KEY in your Apps Script
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Input validation limits (matches backend)
+const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips:2000, whatWorked:2000, whatDidnt:2000};
 
 const CATEGORIES = {
   prompt: { label: "Prompt", bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "\uD83D\uDCAC" },
@@ -305,13 +310,13 @@ async function fetchEntries() {
 async function seedBackend(entries) {
   if (!BACKEND_URL) return;
   for (var i = 0; i < entries.length; i++) {
-    try { await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action:'add', entry:entries[i]}) }); } catch(e) {}
+    try { await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action:'add', key:API_KEY, entry:entries[i]}) }); } catch(e) {}
   }
 }
 async function postAction(action, payload) {
   if (!BACKEND_URL) return;
   try {
-    await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action,...payload}) });
+    await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action, key:API_KEY, ...payload}) });
   } catch(e) { console.log('Backend post failed:', e); }
 }
 
@@ -423,7 +428,18 @@ function EntryForm({ onSubmit, onCancel, existing }) {
   const [tagInput, setTagInput] = useState("");
   function addTag(){if(tagInput.trim() && form.tags.indexOf(tagInput.trim()) === -1){setForm({...form,tags:[...form.tags,tagInput.trim()]});setTagInput("")}}
   function removeTag(tag){setForm({...form,tags:form.tags.filter((t) => t !== tag)})}
-  function handleSubmit(e){e.preventDefault();if(!form.title || !form.content) return;onSubmit({...form,...(isEdit ? {} : {id:Date.now(),date:new Date().toISOString().split("T")[0],votes:0})})}
+  const [formError, setFormError] = useState("");
+  function handleSubmit(e){
+    e.preventDefault();
+    setFormError("");
+    if(!form.title.trim() || !form.content.trim()){setFormError("Title and content are required.");return}
+    if(form.title.length > MAX_LENGTHS.title){setFormError("Title is too long (max " + MAX_LENGTHS.title + " characters).");return}
+    if(form.content.length > MAX_LENGTHS.content){setFormError("Content is too long (max " + MAX_LENGTHS.content + " characters).");return}
+    if(form.description.length > MAX_LENGTHS.description){setFormError("Description is too long (max " + MAX_LENGTHS.description + " characters).");return}
+    if(form.tips.length > MAX_LENGTHS.tips){setFormError("Tips field is too long (max " + MAX_LENGTHS.tips + " characters).");return}
+    if(form.tags.length > 20){setFormError("Too many tags (max 20).");return}
+    onSubmit({...form,...(isEdit ? {} : {id:Date.now(),date:new Date().toISOString().split("T")[0],votes:0})})
+  }
   var inp = {width:"100%",border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 16px",fontSize:"14px",outline:"none",background:"var(--surface)",color:"var(--text)",boxSizing:"border-box"};
   var lbl = {display:"block",fontSize:"13px",fontWeight:600,color:"var(--text)",marginBottom:"4px"};
   return (
@@ -451,6 +467,7 @@ function EntryForm({ onSubmit, onCancel, existing }) {
           <div><label style={lbl}>What Worked Well</label><textarea value={form.whatWorked} onChange={(e) => setForm({...form,whatWorked:e.target.value})} rows={2} style={inp} placeholder="What results did you get?" /></div>
           <div><label style={lbl}>What Didn't Work</label><textarea value={form.whatDidnt} onChange={(e) => setForm({...form,whatDidnt:e.target.value})} rows={2} style={inp} placeholder="Any gotchas or limitations?" /></div>
         </div>
+        {formError && <div style={{background:"var(--red-bg)",border:"1px solid var(--red-border)",borderRadius:"8px",padding:"12px 16px",color:"var(--red-text)",fontSize:"14px"}}>{formError}</div>}
         <button type="submit" style={{width:"100%",background:"var(--accent)",color:"white",padding:"14px",borderRadius:"8px",fontWeight:600,fontSize:"14px",border:"none"}}>{isEdit ? "Save Changes" : "Add Entry to Knowledge Base"}</button>
       </form>
     </div>
