@@ -79,222 +79,428 @@ const CATEGORIES = {
 };
 
 const TAGS = [
-  "Research","Writing","Data Analysis","Grant Applications","Charity Evaluation",
-  "Communications","Operations","Fundraising","Report Writing","Getting Started",
-  "Advanced","Spreadsheets","Presentations","Email","Strategy",
-  "Animal Welfare","Cost-Effectiveness","Theory of Change","Automation","Scheduled Tasks"
+  "Advanced","Automation","Communications","Email","Getting Started","Operations","Research","Scheduled Tasks","Writing"
 ];
 
 const INITIAL_ENTRIES = [
   {
-    id:1,title:"Theory of Change Analysis Helper",category:"prompt",
-    tags:["Charity Evaluation","Theory of Change","Research"],
-    author:"Ethan E.",date:"2026-03-23",votes:0,
-    description:"Structured prompt for evaluating a charity's theory of change, aligned with ACE's evaluation criteria.",
-    content:"I need help analyzing a charity's theory of change as part of an ACE evaluation. I'll provide the charity's program descriptions and evidence.\n\nPlease assess the following for each program:\n\n1. **Causal Chain**: Map out the charity's implicit or explicit theory of change. What are the key steps from intervention to impact on animals?\n2. **Evidence Strength**: How well-supported is each link in the causal chain? Rate as Strong / Moderate / Weak / No Evidence.\n3. **Key Assumptions**: What assumptions does the theory of change rely on? Are they reasonable?\n4. **Counterfactual Impact**: Would these outcomes happen without the charity's intervention?\n5. **Tractability**: How tractable is the problem they're addressing?\n6. **Scale of Impact**: How many animals are affected, and which species? (Prioritize farmed animals, especially fish, chickens, and invertebrates per ACE's focus areas.)\n\nAfter the analysis, provide:\n- A summary assessment of the overall theory of change strength\n- Key uncertainties and evidence gaps\n- Red team objections someone might raise\n- Suggested follow-up questions for the charity\n\nCharity materials:\n[PASTE OR UPLOAD HERE]",
-    tips:"Upload the charity's program reports or website content as PDFs. For red teaming, ask Claude to then argue against its own analysis.",
-    whatWorked:"Aligns well with ACE's actual evaluation framework. The red team objections section is especially valuable for our internal review process.",
-    whatDidnt:"Can be overly generous on evidence strength ratings. Add 'err on the side of caution when rating evidence' to the prompt."
-  },
-  {
-    id:2,title:"Cost-Effectiveness Model Review",category:"prompt",
-    tags:["Charity Evaluation","Cost-Effectiveness","Data Analysis"],
-    author:"Team",date:"2026-03-20",votes:0,
-    description:"Prompt for reviewing and stress-testing cost-effectiveness analyses, including sensitivity analysis.",
-    content:"I have a cost-effectiveness analysis for [CHARITY NAME]. Please help me review it:\n\n1. **Model Structure**: Is the model logically sound? Are there missing factors?\n2. **Input Assumptions**: List each key input assumption. For each, note:\n   - What value was used\n   - Whether it seems reasonable\n   - How sensitive the result is to changes in this input\n3. **Sensitivity Analysis**: Run a basic sensitivity analysis by considering:\n   - Optimistic scenario (best-case assumptions)\n   - Pessimistic scenario (worst-case assumptions)\n   - Which inputs, if changed by 50%, most affect the final estimate?\n4. **Comparison**: How does this compare to cost-effectiveness benchmarks in animal advocacy?\n5. **Limitations**: What does this model NOT capture that might matter?\n\nBe specific about units (e.g., cost per animal-year of suffering averted, cost per corporate policy change).\n\nModel details:\n[PASTE OR UPLOAD SPREADSHEET/MODEL]",
-    tips:"Upload your Excel model directly. Ask Claude to flag any circular reasoning or double-counting.",
-    whatWorked:"Great for catching implicit assumptions in models. The sensitivity analysis output saved us significant time.",
-    whatDidnt:"Claude can struggle with very complex multi-sheet Excel models. Break down the key formulas if needed."
-  },
-  {
-    id:3,title:"Getting Started with Claude Cowork at ACE",category:"guide",
+    id:1,title:"Getting Started with Cowork at ACE",category:"guide",
     tags:["Getting Started","Operations"],
-    author:"Ethan E.",date:"2026-03-23",votes:0,
-    description:"Beginner's guide to using Claude Cowork for everyday ACE work, from evaluations to communications.",
-    content:"## Quick Start Guide\n\n### What is Cowork?\nCowork is Claude's desktop mode. It can read your files, create documents, browse the web, and run code, all from a chat interface.\n\n### First Steps\n1. **Select a folder**: When you start a session, pick the folder you want to work in. Claude can read and create files there.\n2. **Upload files**: Drag and drop files into the chat, or reference files in your selected folder.\n3. **Be specific**: Instead of 'summarize this,' try 'summarize this charity's theory of change evidence in 3 paragraphs, noting key uncertainties, for our internal review.'\n\n### What Works Well at ACE\n- **Evaluation support**: Upload charity reports and get structured analysis against our criteria (Impact, RFMF, Org Health)\n- **Cost-effectiveness modeling**: Have Claude review spreadsheet models and run sensitivity analysis\n- **Research synthesis**: Upload papers for our Research Digest and extract key findings\n- **Document creation**: Create Word docs, spreadsheets, presentations, or PDFs\n- **Blog and comms drafting**: Draft posts for the ACE blog or Better for Animals\n- **Data cleaning**: Clean messy survey data or charity financial data\n- **Scheduled tasks**: Set up recurring automations like email digests or monitoring\n\n### Key Tips\n- Upload full PDFs rather than pasting excerpts\n- For evaluation work, always mention ACE's three criteria: Impact, Room for More Funding, and Organizational Health\n- Ask Claude to 'red team' its own analysis to catch weaknesses\n- Claude runs locally on your machine, files stay on your computer\n- Save prompts that work to this knowledge base so the team can reuse them",
-    tips:"Share this with new team members on day one.",
-    whatWorked:"Dramatically reduced onboarding questions. People who read this before their first session were productive much faster.",
-    whatDidnt:""
+    author:"Ethan E.",date:"2026-04-06",votes:0,
+    description:"Everything you need to hit the ground running — setup, connecting Asana/Slack/Gmail, Projects, safety basics, and prompting tips all in one place.",
+    content:"## Quick Start
+
+Cowork is Claude's desktop mode. It reads your files, creates documents, connects to your apps, and runs code — all from a chat interface.
+
+### Setup
+1. **Download Claude Desktop** from claude.ai/download (requires Pro, Max, Team, or Enterprise plan)
+2. **Select a folder** when you start a session — Claude can read and create files there
+3. **Upload files** by dragging them into the chat
+4. **Be specific**: Instead of 'summarize this,' try 'summarize this report in 3 paragraphs for our internal review, noting key uncertainties'
+
+### Connect Your Tools
+Go to **Settings > Customize** or just ask Claude: 'Can you connect to Asana?'
+
+- **Asana** — Pull your tasks, create new ones from meeting notes, track project status, get daily planning help
+- **Slack** — Post summaries to channels, catch up on what you missed, share digests with the team
+- **Gmail** — Read newsletters, draft emails for review, process labeled emails into digests
+
+Connectors use your existing permissions — Claude can only access what your account can access.
+
+### Projects
+Projects keep related work together with persistent memory and custom instructions. You set context once instead of repeating it every session. Suggested ACE projects:
+- **Communications**: Style guidelines, 'do not fabricate statistics', sample blog posts
+- **Evaluations**: Three criteria (Impact, RFMF, Org Health), rubric, evidence standards
+
+### Prompting Tips
+- **Show, don't tell** — Paste an example of good output instead of describing what you want
+- **Say what NOT to do** — 'Do not fabricate statistics or outcomes' belongs in every prompt that produces external-facing content
+- **Break big tasks into steps** — 'First extract the claims, then fact-check each one, then give me the corrected version'
+- **Close the loop** — When a prompt creates actionable output, route it: 'Create these as Asana tasks' or 'Post this to Slack in #channel'
+- **Iterate** — If the output is 70% right, tell Claude what to fix rather than starting over
+
+### Safety Basics
+- Files stay on your local machine
+- For Slack and Gmail: have Claude create drafts or DM you first before posting to shared channels or sending
+- Add 'Do NOT fabricate any statistics or outcomes' as a custom instruction in every Project
+- Review outputs before sharing externally, especially donor communications",
+    tips:"Share this with new team members on day one. Connect Asana first — the Daily Planner prompt alone makes it worth the 2 minutes of setup.",
+    whatWorked:"People who connected their tools on day one used Cowork far more than those who didn't. Having everything in one guide eliminated the 'where do I start?' question.",
+    whatDidnt:"Some staff initially confuse Cowork with regular Claude chat. Emphasize that Cowork is the desktop mode with file access and tool connections."
   },
   {
-    id:4,title:"Research Digest Article Summarizer",category:"prompt",
-    tags:["Research","Animal Welfare","Writing"],
-    author:"Team",date:"2026-03-18",votes:0,
-    description:"Structured prompt for summarizing empirical studies for ACE's Research Digest.",
-    content:"I need to summarize a research paper for ACE's Research Digest. The digest shares empirical studies related to farmed animal advocacy with our audience.\n\nPlease extract:\n\n1. **Citation**: Full citation in APA format\n2. **One-line summary**: A single sentence capturing the main finding\n3. **Research question**: What did the study investigate?\n4. **Methodology**: Design, sample size, key methods (2-3 sentences)\n5. **Key findings**: The main results with specific numbers/effect sizes\n6. **Relevance to animal advocacy**: Why should advocates or charity evaluators care about this? (2-3 sentences)\n7. **Limitations**: Key weaknesses (1-2 sentences)\n8. **Implication for ACE evaluations**: Does this inform how we assess interventions?\n\nTone: Accessible but rigorous. Our readers include donors, advocates, and charity professionals.\nLength: 200-300 words total.\n\nPaper:\n[UPLOAD PDF]",
-    tips:"Batch 3-5 papers in one session for efficiency. Always verify specific statistics Claude extracts from PDFs.",
-    whatWorked:"Consistent, well-structured summaries that match our digest format. Saves 30-45 min per paper.",
-    whatDidnt:"Occasionally misreads tables or figures in PDFs. Double-check any specific numbers."
+    id:2,title:"Daily Asana Planner",category:"skill",
+    tags:["Operations","Automation","Getting Started"],
+    author:"Ethan E.",date:"2026-04-06",votes:0,
+    description:"Claude pulls your Asana tasks, scans your projects, and builds a prioritized daily plan — with risk flags and overload recommendations. Set it up as a scheduled task to have it waiting for you each morning.",
+    content:"You are my daily planning assistant. Connect to my Asana workspace and help me organize my day. Work through these steps:
+
+1. **Pull my tasks.** Get all tasks assigned to me. Focus on:
+   - Tasks due today
+   - Tasks due this week
+   - Overdue tasks (past due date, still incomplete)
+   - Tasks with no due date that are marked high priority
+
+2. **Scan my projects.** For each project I'm a member of:
+   - Note any tasks due today or this week
+   - Flag anything that looks blocked or stalled (no updates, past due)
+   - Summarize the overall status in one sentence
+
+3. **Build my daily plan.** Based on what you found, create a prioritized plan for today:
+   - Start with anything overdue — those need attention first
+   - Then today's deadlines
+   - Then high-priority items due later this week
+   - Suggest 1-2 quick wins I could knock out between bigger tasks
+   - If my day looks overloaded, recommend what to defer or delegate and explain why
+
+4. **Flag risks.** Call out:
+   - Tasks due soon with no recent activity
+   - Projects where multiple tasks are slipping
+   - Anything that might need me to follow up with someone else
+
+5. **Present the plan:**
+   - OVERDUE (must address today)
+   - DUE TODAY
+   - THIS WEEK priorities
+   - QUICK WINS
+   - RISKS & FOLLOW-UPS
+   - PROJECT STATUS (one line per project)
+
+Keep it concise — focus on what actually needs my attention. Skip low-priority items that aren't due soon.
+
+Ask me if I have any meetings or time blocks today that would affect scheduling, then adjust the plan accordingly.
+
+---
+
+**Optional next steps after reviewing the plan:**
+- 'Update [task name] in Asana — set due date to [new date]' to defer something
+- 'Post my priorities for today to Slack in #standups' to share your plan with the team
+- 'Create an Asana task for [thing I realized I need to do] due [date]' for anything new that came up
+
+**To make this automatic:** Say 'Set this up as a scheduled task that runs every weekday at 8am' and Claude will have your daily plan ready when you start work.",
+    tips:"Set this up as a scheduled task so your plan is waiting when you open Claude each morning. After reviewing, post your priorities to #standups in Slack with one click. If your day is overloaded, ask Claude to draft a message to your manager or team about what you're deferring.",
+    whatWorked:"Having the plan ready at 8am changed how people start their day. The risk flags catch slipping tasks before they become emergencies. The 'overloaded' recommendations helped people push back on unrealistic deadlines with data.",
+    whatDidnt:"Only as good as your Asana hygiene — tasks without due dates or that live in your inbox won't surface correctly. Spend 10 minutes cleaning up your Asana before your first run."
   },
   {
-    id:5,title:"RFMF (Room for More Funding) Assessment",category:"prompt",
-    tags:["Charity Evaluation","Data Analysis","Strategy"],
-    author:"Team",date:"2026-03-15",votes:0,
-    description:"Prompt for analyzing a charity's financial data to assess Room for More Funding.",
-    content:"I need to assess a charity's Room for More Funding (RFMF) as part of an ACE evaluation. RFMF measures how much additional money a charity could productively absorb in the next two years.\n\nPlease analyze the following:\n\n1. **Historical Financials**: Review revenue and expenditure trends over the past 3 years. Is the charity growing? How efficiently do they deploy funds?\n2. **Current Reserves**: What are their reserves relative to annual budget? (Healthy range is typically 3-12 months)\n3. **Growth Capacity**: Based on their plans, could they absorb 25%, 50%, or 100% more funding? What would they do with it?\n4. **Funding Scenarios**: Describe likely outcomes under:\n   - Funding stays flat\n   - Funding increases 50%\n   - Funding doubles\n5. **Leadership and Strategy**: Based on available information, does leadership demonstrate strategic decision-making about resource allocation?\n6. **Risk Factors**: Any financial red flags (overdependence on single donor, rapid unsustainable growth, etc.)?\n\nPresent findings as a structured assessment I can incorporate into our evaluation report.\n\nCharity financial data:\n[UPLOAD FINANCIALS / ANNUAL REPORTS]",
-    tips:"Upload the charity's 990 forms, annual reports, or financial statements. Ask follow-up questions about specific line items.",
-    whatWorked:"The funding scenarios section is directly usable in our evaluation reports. Saves substantial analysis time.",
-    whatDidnt:"Claude cannot access charity databases (GuideStar, etc.) directly. You need to provide the raw data."
+    id:3,title:"Meeting Notes to Action Items + Asana Tasks",category:"prompt",
+    tags:["Operations","Automation","Getting Started"],
+    author:"Team",date:"2026-04-06",votes:0,
+    description:"Turn messy meeting notes into a structured summary, then create Asana tasks for every action item and post the recap to Slack — all in one flow.",
+    content:"Here are notes from our team meeting. Please organize them into:
+
+## Meeting Summary
+2-3 sentences: what was discussed and any important context.
+
+## Key Decisions
+Bullet each decision made. Note who made or approved it.
+
+## Action Items
+Table with columns: Action Item | Owner | Deadline | Priority (High/Med/Low)
+
+For deadlines: Use specific dates mentioned. Convert 'next week' or 'soon' to actual dates. If no deadline was discussed, suggest one based on priority.
+
+## Open Questions
+Anything unresolved. Note who should follow up on each.
+
+## Follow-ups for Next Meeting
+Topics to revisit, with any prep needed.
+
+---
+
+**After I confirm the summary looks right:**
+- Say **'Create these as Asana tasks'** — I'll create a task for each action item with the owner, deadline, and a note referencing this meeting date
+- Say **'Post to Slack in #[channel]'** — I'll post the summary and action items to the team
+- Say **'Both'** — I'll do both at once
+
+Meeting notes:
+[PASTE NOTES OR TRANSCRIPT HERE]",
+    tips:"Works with rough notes, bullet points, or full recorded transcripts. For recurring meetings, add team members' full names and Asana usernames to your Project's custom instructions so Claude matches them automatically. Say 'just create the high-priority tasks for now' if you want to review the rest first.",
+    whatWorked:"Eliminated the gap between 'we discussed it' and 'someone is actually tracking it.' The Slack posting means people who missed the meeting get the recap without anyone manually writing it up.",
+    whatDidnt:"Nicknames and initials cause misassignment. Use full names in notes, or add a mapping in your Project instructions (e.g., 'JD = Jane Doe, Asana: jane@animalcharityevaluators.org')."
   },
   {
-    id:6,title:"Blog Post Writer (ACE Voice)",category:"prompt",
-    tags:["Writing","Communications"],
-    author:"Team",date:"2026-03-12",votes:0,
-    description:"Draft blog posts in ACE's evidence-based, measured voice for the main blog or Better for Animals.",
-    content:"I need to write a blog post for Animal Charity Evaluators. Details:\n\n**Publication**: [ACE Blog / Better for Animals]\n**Topic**: [TOPIC]\n**Audience**: [donors / animal advocates / charity professionals / researchers / general public]\n**Length**: [word count]\n**Key points**: [LIST]\n\nStyle guidelines for ACE content:\n- Lead with evidence and data, not emotion\n- Acknowledge uncertainty and complexity openly\n- Avoid absolutist claims, use hedging language where appropriate\n- Use 'animal welfare' and 'animal advocacy' rather than 'animal rights' unless specifically discussing rights-based approaches\n- Prioritize farmed animal welfare topics, especially fish, chickens, and invertebrates\n- Reference ACE's evaluation criteria (Impact, RFMF, Organizational Health) where relevant\n- Include concrete examples and specific data points\n- End with clear takeaways or calls to action\n- Tone: professional, accessible, evidence-based, compassionate without being preachy\n\nAfter drafting, provide:\n1. Three alternative headline options\n2. A meta description (under 155 characters)\n3. Any claims that need fact-checking or citations\n4. Suggested internal links to other ACE content",
-    tips:"Paste a sample of a recent ACE blog post so Claude can match the exact voice.",
-    whatWorked:"The 'claims needing fact-checking' output is genuinely useful for our editorial review.",
-    whatDidnt:"First drafts sometimes sound generically nonprofit-ish. Adding a sample post helps a lot."
+    id:4,title:"Slack Catch-Up Summarizer",category:"prompt",
+    tags:["Operations","Communications","Getting Started"],
+    author:"Ethan E.",date:"2026-04-06",votes:0,
+    description:"Back from PTO, out sick, or just behind on Slack? Claude reads the channels you care about and gives you a focused summary of what you missed — with action items flagged.",
+    content:"I need to catch up on what I missed in Slack. Please read the following channels from the last [NUMBER] days and give me a focused summary:
+
+**Channels to read**: [#channel-1, #channel-2, #channel-3]
+
+For each channel, provide:
+
+### #channel-name
+- **Key decisions or announcements**: Anything I need to know about — policy changes, deadlines, new initiatives
+- **Discussions that need my input**: Threads where I was mentioned or where my area of work came up
+- **Action items for me**: Anything assigned to me or that I should follow up on
+- **FYI items**: Important context but no action needed from me (keep brief)
+
+Skip: casual conversation, emoji reactions, simple acknowledgments, anything that doesn't affect my work.
+
+After the summary:
+- **Top 3 things I should respond to first** (with links to the threads if possible)
+- **Anything time-sensitive** that I may have already missed the window on
+
+---
+
+**After reviewing:**
+- 'Create Asana tasks for the action items' — to make sure nothing falls through the cracks
+- 'Draft replies for the threads that need my input' — Claude will draft responses I can review before posting
+- 'Post to my Slack DM: here's what I'm catching up on today' — so my team knows what I'm prioritizing",
+    tips:"Great for Monday mornings, returning from PTO, or any day the scroll feels overwhelming. Specify the time window — 'last 2 days' is better than 'recent.' For channels with heavy traffic, add: 'focus on threads with 3+ replies, those are usually the substantive discussions.'",
+    whatWorked:"Turned a 45-minute Monday morning Slack scroll into a 5-minute summary. The 'threads that need my input' section is the real time-saver — you go straight to what matters. Having Claude draft replies means you can respond thoughtfully without the mental overhead of context-switching into each thread.",
+    whatDidnt:"DMs and private channels may not be accessible depending on your connector permissions. If you need those included, check your Slack connection settings. Very long threads (50+ messages) may get summarized too aggressively — ask Claude to expand on specific threads."
   },
   {
-    id:7,title:"Meeting Notes to Action Items",category:"prompt",
-    tags:["Operations","Getting Started"],
-    author:"Team",date:"2026-03-10",votes:0,
-    description:"Convert messy meeting notes into structured summaries with action items, owners, and deadlines.",
-    content:"Here are notes from our team meeting. Please organize them into:\n\n## Meeting Summary\nA 2-3 sentence overview of what was discussed.\n\n## Key Decisions\nBullet each decision that was made.\n\n## Action Items\nA table with columns: Action Item | Owner | Deadline | Priority (High/Medium/Low)\n\n## Open Questions\nAnything raised but not resolved.\n\n## Follow-ups for Next Meeting\nTopics that need to be revisited.\n\nMeeting notes:\n[PASTE NOTES HERE]",
-    tips:"Works even with very rough notes. You can also paste a transcript from a recorded meeting.",
-    whatWorked:"The action items table is immediately copy-pasteable. We use this every week now.",
-    whatDidnt:"If people share the same initials in notes, Claude sometimes assigns actions wrong. Use full names."
+    id:5,title:"Gmail Newsletter Digest",category:"skill",
+    tags:["Email","Automation","Scheduled Tasks"],
+    author:"Ethan E.",date:"2026-04-06",votes:0,
+    description:"Claude reads your labeled Gmail newsletters on a schedule and delivers a themed digest — with the best items posted to Slack so the whole team benefits.",
+    content:"## Setup (one-time, ~5 minutes)
+
+### 1. Label Your Emails
+In Gmail, create a label called 'digest'. Filter relevant newsletters to get this label automatically:
+- Animal welfare research alerts
+- EA Forum digests
+- Charity sector newsletters
+- Funder/foundation updates
+- Policy and legislation trackers
+- Journal table-of-contents alerts
+
+### 2. Connect Gmail
+Settings > Customize > Connect Gmail, or ask: 'Can you connect to my Gmail?'
+
+### 3. Create the Scheduled Task
+Ask Claude:
+
+'Create a scheduled task that runs every Monday and Thursday morning:
+1. Read all emails labeled \"digest\" from the past few days
+2. Extract key points from each in 2-3 sentences
+3. Group by theme: Research, Policy/Legislation, Charity News, Fundraising/Grants, Other
+4. Rank items by relevance to ACE's work
+5. Create a \"Worth Reading in Full\" section for the 1-2 best items with links
+6. Note any action items — deadlines, events, opportunities
+7. Save as a markdown file
+8. Post the top 5 highlights to Slack in #research-updates'
+
+### 4. Refine Over Time
+After a few runs, tell Claude what to adjust:
+- 'Spend more time on research papers, less on general news'
+- 'Always flag anything mentioning [charity we're evaluating]'
+- 'Deprioritize items from [low-value source]'
+- 'Track themes across weeks — what keeps coming up?'
+
+**Recommended frequency**: Twice-weekly (Mon/Thu). Daily if you get 5+ relevant emails per day.",
+    tips:"Add a 'digest-priority' label for must-read sources so Claude highlights them. The Slack posting means the whole team benefits from one person's subscriptions — coordinate with colleagues so you're not all digesting the same newsletters.",
+    whatWorked:"Turns 30+ weekly emails into a 5-minute read. The thematic grouping connects related articles from different sources. Slack posting means the research team stays informed without everyone subscribing to everything.",
+    whatDidnt:"Heavily formatted HTML emails may not parse perfectly — plain text newsletters work best. Adjust the task after the first couple of runs to calibrate signal vs. noise."
   },
   {
-    id:8,title:"Evaluation Report Generator",category:"example",
-    tags:["Charity Evaluation","Report Writing","Spreadsheets"],
-    author:"Team",date:"2026-03-08",votes:0,
-    description:"Example of using Cowork to turn evaluation data into formatted reports with charts.",
-    content:"## What We Did\n\nWe had evaluation scores across multiple charities and needed a presentation-ready Excel report for the November recommendations cycle.\n\n## The Prompt That Worked\n\n'I have uploaded charity_evaluations_2025.csv. Please create a formatted Excel report:\n1. Dashboard sheet with summary stats (average scores by criterion: Impact, RFMF, Org Health)\n2. Detailed scores sheet with conditional formatting (green/yellow/red by score range)\n3. Comparison chart showing overall scores ranked highest to lowest\n4. Use ACE branding (teal #00897B as primary color)\nFormat professionally for our board presentation.'\n\n## Result\nClaude created a multi-sheet workbook in about 2 minutes. The conditional formatting and charts were directly usable.\n\n## What We Learned\n- Specifying ACE's exact brand color (#00897B) upfront avoids iteration\n- Naming our three criteria explicitly (Impact, RFMF, Org Health) gets better column headers\n- Using the /xlsx command activates specialized spreadsheet capabilities\n- Asking for a 'dashboard sheet' triggers summary statistics automatically",
-    tips:"Always specify brand colors as hex codes. Name ACE's criteria explicitly in prompts.",
-    whatWorked:"Board loved the dashboard layout. Went from 3+ hours of manual Excel work to 20 minutes of iteration.",
-    whatDidnt:"First attempt had chart axes flipped. Be explicit about orientation in your prompt."
-  },
-  {
-    id:9,title:"Grant Application Drafter",category:"prompt",
-    tags:["Grant Applications","Writing","Fundraising"],
-    author:"Team",date:"2026-03-05",votes:0,
-    description:"Draft grant applications with ACE's evidence-based framing and methodology emphasis.",
-    content:"I am writing a grant application for Animal Charity Evaluators.\n\n**Funder**: [NAME]\n**Grant program**: [PROGRAM NAME]\n**Amount**: [AMOUNT]\n**Project**: [BRIEF DESCRIPTION]\n\nGuidelines:\n- Emphasize ACE's rigorous evaluation methodology (theory of change analysis, cost-effectiveness modeling, red teaming)\n- Reference our track record: over a decade of charity evaluations, 10 recommended charities in 2025\n- Highlight our research outputs: Research Digest, Better for Animals, evidence reviews\n- Use evidence-based, measured tone (not hyperbolic)\n- Frame animal welfare impact in terms aligned with the funder's priorities\n- Include specific data and outcomes where I provide them\n- Keep language accessible but professional\n\nApplication questions:\n[PASTE QUESTIONS HERE]\n\nBackground materials:\n[UPLOAD RELEVANT ACE REPORTS/DATA]",
-    tips:"Upload the funder's guidelines as a PDF so Claude tailors language to their priorities.",
-    whatWorked:"Strong first drafts that accurately represent ACE's methodology. Evidence-based framing prompt prevents overselling.",
-    whatDidnt:"You will need to add specific internal metrics. Claude cannot access our databases."
-  },
-  {
-    id:10,title:"Red Teaming Your Own Analysis",category:"guide",
-    tags:["Charity Evaluation","Advanced","Strategy"],
-    author:"Team",date:"2026-03-03",votes:0,
-    description:"How to use Claude to stress-test arguments and claims, mirroring ACE's internal red teaming process.",
-    content:"## Why Red Team with Claude?\n\nACE's evaluation process includes red teaming where team members stress-test arguments and claims to detect errors. Claude can serve as an on-demand red teaming partner.\n\n## How to Do It\n\n### Step 1: Present Your Analysis\nPaste or upload your draft evaluation, report section, or recommendation rationale.\n\n### Step 2: Ask for Red Teaming\nUse a prompt like:\n'Now act as a critical reviewer who disagrees with this analysis. Identify:\n- Logical weaknesses or gaps in reasoning\n- Unsupported claims or assumptions\n- Alternative explanations for the evidence\n- What the strongest counterargument would be\n- What evidence would change your conclusion\nBe specific and cite which parts of my analysis you are challenging.'\n\n### Step 3: Respond and Iterate\nAddress each objection, then ask Claude to red team your responses too.\n\n### Step 4: Synthesize\n'Based on this red teaming exercise, what are the 3 most important caveats or uncertainties I should flag in my final analysis?'\n\n## Pro Tips\n- Do this BEFORE sharing your analysis with colleagues\n- Ask Claude to adopt a specific perspective ('red team this from the perspective of a skeptical donor')\n- Use this for blog posts too, not just evaluations",
-    tips:"This is one of the highest-value uses of Cowork at ACE. Make it a habit before finalizing any evaluation work.",
-    whatWorked:"Catches blind spots consistently. Multiple team members said this improved their analysis quality.",
-    whatDidnt:"Claude can be too polite in its criticism. Add 'be brutally honest' to get stronger pushback."
-  },
-  {
-    id:11,title:"Prompt Engineering Best Practices",category:"guide",
-    tags:["Getting Started","Advanced"],
-    author:"Ethan E.",date:"2026-03-01",votes:0,
-    description:"Key principles for writing effective prompts that get better results from Claude.",
-    content:"## Core Principles\n\n### 1. Be Specific About What You Want\nBad: 'Summarize this report'\nGood: 'Summarize this charity's theory of change evidence in 3 paragraphs, noting key uncertainties, for our internal evaluation review'\n\n### 2. Provide Context\n- Who is the output for (board, donors, team, public)?\n- What format (prose, table, bullet points, document)?\n- What tone (formal, conversational, academic)?\n- Any constraints (word count, ACE style guidelines)?\n\n### 3. Show, Don't Just Tell\nPaste an example of good output rather than just describing the style you want.\n\n### 4. Break Complex Tasks into Steps\n'First analyze the theory of change, then assess cost-effectiveness, then identify the top 3 uncertainties.'\n\n### 5. Ask Claude to Think Before Answering\nFor complex analysis: 'Before giving your answer, think through the key considerations and trade-offs.'\n\n### 6. Iterate, Don't Start Over\nIf the response is 70% right, tell Claude what to change rather than starting from scratch.\n\n### 7. Upload Files Instead of Pasting\nPDFs, spreadsheets, and documents give Claude better context when uploaded directly.\n\n### 8. Say What NOT to Do\n'Don't fabricate statistics' or 'Don't use emotional language' can be as important as positive instructions.\n\n### 9. Use ACE-Specific Context\nAlways mention our three evaluation criteria, our focus on farmed animals, and our evidence-based approach when relevant.",
-    tips:"Bookmark this page. The difference between a vague and specific prompt is often 30+ minutes of iteration saved.",
-    whatWorked:"Team members who follow these principles consistently get better first-draft results.",
-    whatDidnt:""
-  },
-  {
-    id:12,title:"Donor Email Personalization",category:"example",
-    tags:["Email","Fundraising","Communications"],
-    author:"Team",date:"2026-02-25",votes:0,
-    description:"How we used Cowork to draft personalized donor update emails at scale while maintaining ACE's voice.",
-    content:"## The Task\nDraft personalized update emails for major donors ahead of our November recommendations announcement.\n\n## What We Did\n1. Uploaded a spreadsheet with donor names, giving history, interest areas, and last interaction dates\n2. Used this prompt:\n\n'Using the donor spreadsheet, draft a personalized email for each donor. Each email should:\n- Thank them for their specific contribution\n- Reference their interest area with a relevant ACE update (new recommended charities, research findings)\n- Mention one specific impact from our work this year\n- Be warm but professional, evidence-based not emotional\n- Be 150-200 words\n- End with an invitation to explore our latest recommendations (not a direct donation ask)\n- Do NOT fabricate any statistics or outcomes\n\nSave all emails in a single Word document with headers for each donor.'\n\n## Result\nClaude created 15 personalized drafts. About 80% needed only minor edits.\n\n## Lessons\n- Adding 'Do NOT fabricate any statistics' was critical. First attempt without it included a made-up metric\n- Well-structured spreadsheet (clear column headers) made a big difference\n- Add 'vary the opening and structure' to avoid emails sounding too similar",
-    tips:"Always fact-check numbers in generated donor communications. Add 'do not fabricate' to every donor-facing prompt.",
-    whatWorked:"Saved a full day of writing. Personalization quality was surprisingly good.",
-    whatDidnt:"Some emails were structurally too similar. Explicitly ask for variation."
-  },
-  {
-    id:13,title:"Gmail Newsletter Digest with Claude",category:"guide",
-    tags:["Email","Automation","Scheduled Tasks","Getting Started"],
-    author:"Ethan E.",date:"2026-03-23",votes:0,
-    description:"Set up Claude to automatically read your Gmail newsletters labeled 'digest' and deliver a curated summary on a schedule.",
-    content:"## Overview\n\nIf you subscribe to newsletters, blogs, and updates relevant to animal welfare, effective altruism, or charity evaluation, Claude can read them for you and deliver a curated digest so you get the signal without the noise.\n\n## How to Set It Up\n\n### Step 1: Label Your Emails\nIn Gmail, create a label called 'digest'. Set up filters so newsletters and blog notification emails automatically get this label. Good candidates:\n- Animal welfare research alerts\n- EA Forum digests\n- Charity sector newsletters\n- Funder/foundation updates\n- Policy and legislation trackers\n- Academic journal table-of-contents alerts\n\n### Step 2: Connect Gmail to Claude\nIn Cowork, Claude can connect to Gmail via MCP (Model Context Protocol). Ask Claude: 'Can you connect to my Gmail?' and it will walk you through authorizing access. You can also search for the Gmail connector in Settings.\n\n### Step 3: Create a Scheduled Task\nAsk Claude:\n'Create a scheduled task that runs every Monday and Thursday morning. It should:\n1. Read all emails with the Gmail label \"digest\" from the past few days\n2. For each email, extract the key points in 2-3 sentences\n3. Group findings by theme: Research, Policy/Legislation, Charity News, Fundraising/Grants, Other\n4. Flag anything directly relevant to our current evaluations or upcoming deadlines\n5. Note any action items (events to register for, deadlines to meet, etc.)\n6. Save the digest as a markdown file and tell me the highlights'\n\n### Frequency Options\n- **Daily**: Best if you get 5+ relevant emails per day\n- **Twice weekly** (recommended): Monday and Thursday catches the week's content without overload\n- **Weekly**: Friday afternoon digest to prep for the following week\n\n### Step 4: Refine Over Time\nAfter a few digests, tell Claude what to adjust:\n- 'Spend more time on research papers, less on general news'\n- 'Always flag anything mentioning [specific charity we are evaluating]'\n- 'Include a \"worth reading in full\" section for the best 1-2 items'\n\n## Pro Tips\n- Add a 'digest-priority' label for must-read sources so Claude highlights them\n- Ask Claude to track recurring themes across weeks ('What topics keep coming up?')\n- Have it flag when sources contradict each other on a topic\n- You can share the digest with colleagues by having Claude post it to a shared doc or Slack channel",
-    tips:"Start with twice-weekly and adjust. The first couple of digests may need feedback to calibrate what you find useful vs. noise.",
-    whatWorked:"Turns 30+ weekly newsletter emails into a 5-minute read. The thematic grouping is especially valuable since related articles from different sources get connected.",
-    whatDidnt:"Gmail connection setup can take a few minutes the first time. Some heavily formatted HTML emails may not parse perfectly. Plain text newsletters work best."
-  },
-  {
-    id:14,title:"Charity Website Change Monitor",category:"skill",
-    tags:["Charity Evaluation","Automation","Scheduled Tasks","Advanced"],
-    author:"Team",date:"2026-03-22",votes:0,
-    description:"Set up a scheduled task to monitor charities' websites for meaningful updates during evaluation periods.",
-    content:"## Why This Matters\n\nDuring evaluation season, charities may update their websites with new program information, impact reports, leadership changes, or strategic pivots. Catching these early informs our evaluations.\n\n## How to Set It Up\n\nAsk Claude to create a scheduled task:\n\n'Create a weekly scheduled task that:\n1. Visits these charity websites: [LIST URLS]\n2. Checks for new blog posts, press releases, annual reports, or team page changes\n3. Compares against what was there last time (look for new content in the past week)\n4. Summarizes any meaningful updates in a brief report\n5. Flags anything that could affect our evaluation (leadership changes, new programs, controversy, funding announcements)\n6. Saves the report as a dated file in my selected folder\n\nFocus on substance, not cosmetic site changes. Ignore minor UI tweaks.'\n\n## What to Monitor\n- Program pages and impact metrics\n- Blog/news sections\n- Team and leadership pages\n- Annual reports and financial documents\n- Any press mentions or media coverage\n\n## Evaluation Season Usage\nDuring the summer-fall evaluation period, increase frequency to twice weekly for charities under active evaluation.",
-    tips:"Start monitoring charities 2-3 months before evaluation season begins. Maintain a running log so you can see changes over time.",
-    whatWorked:"Caught a leadership transition at one charity two weeks before they announced it publicly. Informed our Organizational Health assessment.",
-    whatDidnt:"Dynamic/JavaScript-heavy sites sometimes render incompletely. For those, manually check quarterly."
-  },
-  {
-    id:15,title:"Evaluation Draft Peer Review",category:"prompt",
-    tags:["Charity Evaluation","Writing","Advanced"],
-    author:"Team",date:"2026-03-20",votes:0,
-    description:"Use Claude as a first-pass peer reviewer before sending evaluation drafts to colleagues, catching issues early.",
-    content:"I am about to share this evaluation draft with my colleagues for peer review. Before I do, please act as a rigorous peer reviewer and assess this draft:\n\n## Clarity and Structure\n- Is the argument easy to follow?\n- Are sections in a logical order?\n- Are there any jumps in logic or missing transitions?\n\n## Evidence and Claims\n- Are all claims supported by evidence cited in the text?\n- Are there any unsupported assertions I should back up or hedge?\n- Am I presenting the evidence fairly, or am I cherry-picking?\n\n## ACE Standards\n- Does this meet ACE's standard for evidence-based analysis?\n- Am I consistent in how I apply our criteria (Impact, RFMF, Org Health)?\n- Would a reader unfamiliar with the charity understand the assessment?\n\n## Tone and Balance\n- Is the tone appropriately measured and professional?\n- Am I being fair to the charity while still being honest about weaknesses?\n- Are there places where I sound too harsh or too lenient?\n\n## Missing Elements\n- What important questions does this draft NOT address?\n- What would a skeptical reader want to know that I have not covered?\n\nBe specific. Quote the sections you are critiquing and suggest concrete improvements.\n\nDraft:\n[PASTE OR UPLOAD]",
-    tips:"Run this before every peer review round. It catches 60-70% of what colleagues would flag, saving everyone time.",
-    whatWorked:"Colleagues noticed drafts were significantly more polished after people started running this first. Reduced review cycles.",
-    whatDidnt:"Does not replace human peer review. Claude misses domain-specific nuances that experienced evaluators catch."
-  },
-  {
-    id:16,title:"Weekly Team Standup Summarizer",category:"skill",
+    id:6,title:"Weekly Team Summary",category:"skill",
     tags:["Operations","Automation","Scheduled Tasks"],
-    author:"Team",date:"2026-03-18",votes:0,
-    description:"Automated weekly summary of team progress, blockers, and priorities from standup notes or Slack updates.",
-    content:"## The Problem\nWith a 15+ person team, keeping track of what everyone is working on and where blockers exist is hard. Written standups help but nobody reads everyone else's updates.\n\n## The Solution\nAsk Claude to create a scheduled task:\n\n'Create a weekly scheduled task (Friday at 3pm) that:\n1. Reads the team standup notes from this week [specify source: shared doc, Slack channel, etc.]\n2. Creates a team-wide summary organized by:\n   - **Completed this week**: What got done across the team\n   - **In progress**: What is actively being worked on\n   - **Blocked**: Any blockers or dependencies that need attention\n   - **Upcoming priorities**: What is planned for next week\n   - **Cross-team dependencies**: Where one person's work depends on another's\n3. Highlights anything that seems stalled (mentioned multiple weeks without progress)\n4. Saves the summary and posts the highlights'\n\n## Variations\n- **Evaluation season version**: Add a section tracking evaluation progress by charity\n- **Board prep version**: Monthly summary formatted for leadership review\n- **Sprint review version**: Compare what was planned vs. what was completed",
-    tips:"Most useful during evaluation season when many workstreams run in parallel. Connect to Slack via MCP for automatic reading.",
-    whatWorked:"Leadership started using the Friday summary as the basis for Monday planning meetings. Saved 20 minutes of status updates per meeting.",
-    whatDidnt:"Quality depends heavily on people actually writing standup notes. Garbage in, garbage out."
+    author:"Team",date:"2026-04-06",votes:0,
+    description:"Automated Friday summary of what got done, what's in progress, and what's blocked — pulled from Slack standups and cross-referenced with Asana, posted for Monday planning.",
+    content:"## The Problem
+Nobody reads everyone else's standup updates. Blockers go unnoticed until they're crises. Monday meetings start with 20 minutes of status recaps.
+
+## Setup
+Ask Claude to create a scheduled task:
+
+'Create a weekly scheduled task (Friday at 3pm) that:
+1. Read standup updates from Slack #standups from this week
+2. Pull task data from Asana — what was completed, what's in progress, what's overdue
+3. Create a team summary:
+   - **Completed**: What got done this week (grouped by workstream)
+   - **In Progress**: Active work with estimated completion
+   - **Blocked**: Blockers and dependencies — highlight prominently
+   - **At Risk**: Asana tasks due this week that aren't done yet, or tasks with no updates in 2+ weeks
+   - **Next Week**: Planned priorities
+4. Flag anything mentioned in standups but not reflected in Asana (or vice versa) — these are gaps
+5. Post the summary to Slack in #team-updates'
+
+## Escalation for Critical Blockers
+Add: 'If any blocker has been open for 3+ days or is marked urgent, also post to #blockers and create a high-priority Asana task assigned to the team lead.'
+
+## Variations
+- **Evaluation season**: Add a section tracking evaluation progress by charity
+- **Monthly leadership version**: Aggregate weekly summaries into a monthly overview
+- **Sprint comparison**: What was planned (Asana tasks at start of week) vs. what was completed",
+    tips:"Start simple — just Slack reading and summary. Add the Asana cross-reference once that's running smoothly. The gap detection (standup vs. Asana mismatch) is where the real value is: it catches work that's happening off-radar and tasks that are stalled without anyone noticing.",
+    whatWorked:"Leadership uses the Friday summary for Monday planning — saved 20 minutes per meeting. The 'at risk' detection caught tasks stuck for 3 weeks that nobody had noticed. The Slack-vs-Asana gap detection surfaced several projects where work was happening but not being tracked.",
+    whatDidnt:"Quality depends on people writing standups and updating Asana. Garbage in, garbage out. Consider making the summary visible — when people know their updates feed into a team report, they write better standups."
   },
   {
-    id:17,title:"Organizational Health Deep Dive",category:"prompt",
-    tags:["Charity Evaluation","Strategy","Research"],
-    author:"Team",date:"2026-03-15",votes:0,
-    description:"Comprehensive prompt for assessing a charity's organizational health, the third pillar of ACE's evaluation criteria.",
-    content:"I need to assess a charity's Organizational Health as part of an ACE evaluation. This covers governance, leadership, culture, and operational capacity.\n\nBased on the materials I provide, please analyze:\n\n1. **Governance**: Board composition, independence, expertise, meeting frequency, oversight quality\n2. **Leadership**: Executive experience, tenure, succession planning, strategic vision\n3. **Staff and Culture**: Team size and growth, staff retention, diversity, employee satisfaction signals\n4. **Operations**: Financial management, compliance, reporting quality, systems and processes\n5. **Adaptability**: How has the organization responded to challenges? Do they learn and pivot when evidence suggests they should?\n6. **Transparency**: How openly do they share information about their methods, results, and failures?\n7. **DEI Practices**: What diversity, equity, and inclusion efforts are visible?\n\nFor each area, note:\n- Evidence supporting your assessment\n- Red flags or concerns\n- Questions we should ask the charity directly\n\nRate each area: Strong / Adequate / Concerning / Insufficient Information\n\nMaterials:\n[UPLOAD ANNUAL REPORTS, 990s, WEBSITE CONTENT, INTERVIEW NOTES]",
-    tips:"This works best with multiple data sources. Upload the 990, annual report, and any interview notes together.",
-    whatWorked:"The 'questions to ask the charity directly' section generates excellent follow-up questions for our interviews.",
-    whatDidnt:"Claude may overweight publicly available information. Internal culture issues are rarely visible from the outside."
+    id:7,title:"Blog Post Writer (ACE Voice)",category:"prompt",
+    tags:["Writing","Communications"],
+    author:"Team",date:"2026-04-06",votes:0,
+    description:"Draft blog posts in ACE's evidence-based voice with headlines, social media copy, and a fact-check list — then share to Slack for team review.",
+    content:"I need to write a blog post for Animal Charity Evaluators.
+
+**Publication**: [ACE Blog / Better for Animals]
+**Topic**: [TOPIC]
+**Audience**: [donors / advocates / charity professionals / researchers / general public]
+**Length**: [word count]
+**Key points**: [LIST]
+**Call to action**: [What should the reader do?]
+
+## ACE Voice
+- Lead with evidence and data, not emotion
+- Acknowledge uncertainty openly ('suggests,' 'indicates,' not 'proves')
+- 'animal welfare' / 'animal advocacy' — not 'animal rights' unless discussing rights-based approaches
+- 'farmed animals' not 'farm animals'
+- Concrete examples and specific data points
+- Tone: professional, accessible, evidence-based, compassionate without being preachy
+- Oxford comma: always
+
+## Also provide:
+1. Three headline options (specific and intriguing, not generic)
+2. Meta description (under 155 characters)
+3. Social blurb for X/Twitter (under 280 characters)
+4. LinkedIn post (under 500 characters)
+5. Claims needing fact-checking — quote each one
+6. Suggested internal links to ACE content
+
+**Do NOT fabricate statistics, study results, or quotes.** Use [NEED CITATION] for anything that needs a source.
+
+---
+
+**After drafting:**
+- 'Post a summary to Slack in #communications for team review'
+- 'Create an Asana task to publish by [DATE]'",
+    tips:"Paste a recent ACE blog post as an example so Claude matches the exact voice. Add the style guidelines to a Communications Project so you never repeat them. The fact-check list is your pre-publication safety net.",
+    whatWorked:"Social media blurbs save the comms team extra work. The fact-check list catches issues before they go live. Posting to Slack for review gets faster feedback than emailing a doc around.",
+    whatDidnt:"First drafts can sound generically nonprofit-ish. Providing a sample post to match helps a lot. Add 'vary sentence structure and avoid generic openings' if the writing feels formulaic."
   },
   {
-    id:18,title:"Evidence Review Synthesizer",category:"prompt",
-    tags:["Research","Animal Welfare","Data Analysis"],
-    author:"Team",date:"2026-03-12",votes:0,
-    description:"Synthesize multiple research papers into a structured evidence review on a specific animal welfare intervention.",
-    content:"I am building an evidence review on [INTERVENTION TYPE, e.g., 'corporate cage-free campaigns', 'fish welfare certification', 'plant-based meat promotion'].\n\nI will upload several papers. For each, I need you to extract key data. Then synthesize across all papers.\n\n## Per-Paper Extraction\n- Citation, research question, methodology, sample size\n- Key findings with effect sizes where available\n- Study quality (randomized? peer reviewed? representative sample?)\n- Potential biases or conflicts of interest\n\n## Cross-Paper Synthesis\nAfter reviewing all papers, provide:\n1. **Overall evidence quality**: How strong is the evidence base for this intervention? (Strong / Moderate / Weak / Very Weak)\n2. **Consistent findings**: What do most studies agree on?\n3. **Contradictions**: Where do studies disagree? Why might that be?\n4. **Effect size range**: What is the range of estimated impact across studies?\n5. **Publication bias concerns**: Are we likely missing null results?\n6. **Geographic and species gaps**: Where has this been studied and where has it not?\n7. **Implications for ACE**: How should this evidence inform our evaluation of charities using this intervention?\n8. **Research priorities**: What studies would be most valuable to fill the gaps?\n\nPresent as a structured review I can reference in our evaluation reports.",
-    tips:"Upload 5-10 papers at a time. For large reviews, break into batches and ask Claude to synthesize the batch summaries at the end.",
-    whatWorked:"Produced a draft evidence review on shrimp welfare interventions that our research team said was 80% of the way to a final product.",
-    whatDidnt:"Claude sometimes treats low-quality studies as equivalent to high-quality ones. Explicitly ask it to weight by study quality."
-  },
-  {
-    id:19,title:"Connecting External Tools via MCP",category:"guide",
-    tags:["Advanced","Automation","Getting Started"],
-    author:"Ethan E.",date:"2026-03-23",votes:0,
-    description:"How to connect Claude Cowork to external services like Gmail, Slack, Google Drive, and more using MCP connectors.",
-    content:"## What is MCP?\n\nMCP (Model Context Protocol) lets Claude connect directly to external tools and services. Instead of copying and pasting between apps, Claude can read your emails, access your files, post to Slack, and more.\n\n## Available Connectors\n\nIn Cowork, you can connect to services by asking Claude or by going to Settings. Some useful ones for ACE:\n\n- **Gmail**: Read emails, search by label, draft replies\n- **Google Drive**: Access shared documents and folders\n- **Slack**: Read channels, post messages, search history\n- **Asana/Linear**: Read and create tasks\n- **Google Sheets**: Read and write spreadsheet data directly\n- **GitHub**: Access repositories, issues, and pull requests\n\n## How to Connect\n\n1. Ask Claude: 'Can you connect to [service name]?'\n2. Claude will check if a connector exists and guide you through authorization\n3. Once connected, you can reference that service naturally: 'Read my latest emails' or 'Check my Asana tasks'\n\n## Best Practices\n- Start with one connector and get comfortable before adding more\n- Be specific about what you want Claude to access ('emails labeled digest from this week' not 'my emails')\n- Connectors respect your existing permissions. Claude can only access what your account can access\n- Review what Claude reads and sends, especially early on. Build trust gradually\n\n## Ideas for ACE\n- Gmail + scheduled tasks = automatic newsletter digests\n- Google Drive + evaluation prompts = process charity documents directly from shared folders\n- Slack + meeting notes prompt = auto-summarize channel discussions\n- Asana + standup summarizer = weekly progress reports from task data",
-    tips:"Connect Gmail first since it is the most immediately useful. The newsletter digest use case alone justifies the 5 minutes of setup.",
-    whatWorked:"Having Claude read directly from Gmail instead of forwarding/pasting emails saves significant friction. People actually use the digest feature because it is zero-effort after setup.",
-    whatDidnt:"Some connectors require re-authorization periodically. If Claude says it cannot access a service, try reconnecting."
-  },
-  {
-    id:20,title:"Fact-Check and Citation Finder",category:"prompt",
+    id:8,title:"Pre-Publication Checker",category:"prompt",
     tags:["Writing","Research","Communications"],
-    author:"Team",date:"2026-03-10",votes:0,
-    description:"Have Claude fact-check a draft and find citations for claims before publication.",
-    content:"I have a draft [blog post / report / grant application / public communication] for ACE. Before we publish, I need you to:\n\n## 1. Claim Audit\nGo through the draft and identify every factual claim, statistic, or assertion. For each one, categorize it as:\n- **Verified**: You can confirm this with a web search or it is common knowledge\n- **Plausible but unverified**: Sounds right but needs a citation\n- **Potentially incorrect**: This may be wrong or outdated\n- **Fabricated risk**: This sounds like it could be an AI hallucination\n\n## 2. Citation Search\nFor claims marked 'plausible but unverified', search the web for supporting sources. Provide:\n- The source URL and title\n- The specific quote or data point that supports the claim\n- How recent the source is (flag anything older than 2 years)\n\n## 3. Suggested Corrections\nFor anything 'potentially incorrect', provide:\n- What the claim states\n- What the evidence actually says\n- Suggested revised language\n\n## 4. Missing Context\nAre there important caveats, counterarguments, or nuances that should be mentioned for responsible communication?\n\nDraft:\n[PASTE OR UPLOAD]",
-    tips:"Run this on EVERY public-facing document. It takes 2 minutes and has caught errors that would have been embarrassing to publish.",
-    whatWorked:"Caught an outdated statistic in a grant application that had been copy-pasted from a 2019 report. Also found three claims that needed hedging language.",
-    whatDidnt:"Web search cannot access paywalled academic papers. For research-heavy pieces, you may need to verify some citations manually."
+    author:"Team",date:"2026-04-06",votes:0,
+    description:"One prompt that catches everything before you publish — copyediting, ACE terminology, fact-checking, and citation finding combined. Run this on every external-facing document.",
+    content:"I need a thorough pre-publication review of this [blog post / report / grant application / donor email / social media post] for ACE. Check everything:
+
+## 1. Copy Edit
+- Fix all spelling, grammar, and punctuation errors (Oxford comma: always)
+- Flag sentences over 35 words or paragraphs over 5 sentences
+- Check formatting consistency (headings, bullets, numbers)
+
+## 2. ACE Terminology & Tone
+- 'animal welfare' / 'animal advocacy' not 'animal rights'
+- 'farmed animals' not 'farm animals'
+- 'charity' or 'organization' not 'nonprofit'
+- Hedging for uncertain claims: 'suggests,' 'indicates,' not 'proves'
+- ACE's three criteria: Impact, Room for More Funding (RFMF), Organizational Health — named consistently?
+- Acronyms spelled out on first use?
+- Tone: evidence-based, professional, not preachy or absolutist?
+
+## 3. Fact-Check
+For every factual claim, statistic, or assertion, categorize as:
+| # | Claim | Status | Notes |
+
+Statuses:
+- **Verified**: Confirmed via search or well-established
+- **Needs citation**: Plausible but must have a source before publishing
+- **Possibly wrong**: May be incorrect or outdated
+- **Fabrication risk**: Sounds AI-generated — verify before using
+
+For claims needing citations: search the web and provide source URL, supporting quote, and publication date. Flag anything older than 2 years.
+
+## 4. Date Sensitivity
+Flag anything that could go stale: staff counts, budget numbers, recommendation counts, research findings.
+
+## Output
+1. **Overall assessment**: Ready to publish / Needs minor edits / Needs significant revision
+2. **Edits table**: Original text | Issue | Fix | Severity (Minor/Moderate/Major)
+3. **Claim audit table**: # | Claim | Status | Source or concern
+4. **Clean corrected version**: With all copyedits applied, ready to paste
+
+**Do not mark something 'verified' based on plausibility alone. If you can't confirm it, say so.**
+
+Draft:
+[PASTE OR UPLOAD]",
+    tips:"Run this on everything before it goes out — blog posts, grant applications, donor emails, reports, social media. It replaces the need for separate editing and fact-checking prompts. For the absolute highest stakes documents (grant apps, board materials), also run the draft past a colleague.",
+    whatWorked:"Caught an outdated statistic copy-pasted from a 2019 report in a grant application. The combined format means one pass instead of two, which people actually do consistently. The severity ratings help prioritize what to fix first.",
+    whatDidnt:"Can't access paywalled academic papers for citation verification. For research-heavy pieces, verify those manually. May over-edit intentionally casual writing — for social media, add: 'this is casual, focus on errors and terminology only.'"
   },
   {
-    id:21,title:"Board Presentation Prep Assistant",category:"skill",
-    tags:["Presentations","Strategy","Operations"],
-    author:"Team",date:"2026-03-08",votes:0,
-    description:"A multi-step workflow for preparing board meeting materials: agenda, slides, briefing docs, and talking points.",
-    content:"## The Workflow\n\nPreparing for a board meeting involves multiple documents that need to be consistent with each other. Here is how to use Cowork to prepare everything efficiently.\n\n### Step 1: Create the Agenda\n'Create a board meeting agenda for [DATE]. Topics: [LIST]. Allocate time based on importance. Include a consent agenda for routine items.'\n\n### Step 2: Build the Slide Deck\n'Create a PowerPoint presentation for the board meeting covering: [TOPICS]. Use ACE branding (teal #00897B). Keep slides minimal with key data points. Add detailed speaker notes. Include a financial summary slide using the attached budget data.'\n\n### Step 3: Create Briefing Documents\n'For each major agenda item, create a 1-page briefing document that includes: background, current status, key decision needed, options with pros/cons, and staff recommendation.'\n\n### Step 4: Prepare Talking Points\n'Based on the slides and briefing docs, create talking points for the ED covering: key messages, anticipated questions from board members, and data points to have ready.'\n\n### Step 5: Review for Consistency\n'Review the agenda, slides, and briefing docs together. Flag any inconsistencies in data, framing, or recommendations across documents.'\n\n## Pro Tips\n- Upload last quarter's board materials so Claude matches the format\n- Do all steps in one Cowork session so Claude has full context\n- Ask Claude to flag any sensitive topics that need careful framing\n- Have Claude draft follow-up email with meeting summary after the meeting",
-    tips:"Start board prep 2 weeks before the meeting. Do steps 1-3 in the first session, steps 4-5 after the team has reviewed drafts.",
-    whatWorked:"Reduced board prep from a full week to about 2 days. The consistency check in step 5 catches mismatches every time.",
-    whatDidnt:"Claude cannot access live financial data. Upload current financials manually for accurate numbers."
+    id:9,title:"Quick Email Drafter",category:"prompt",
+    tags:["Email","Operations","Getting Started"],
+    author:"Team",date:"2026-04-06",votes:0,
+    description:"Describe what you need to communicate, and Claude drafts the email using context from Asana tasks or Slack threads — saved as a Gmail draft for your review.",
+    content:"I need to draft an email. Here's the context:
+
+**To**: [recipient name/role — or 'pull from Asana task [task name]' if the context is there]
+**Purpose**: [what you need to communicate — e.g., 'follow up on the grant deadline,' 'update the board on evaluation progress,' 'ask a charity for missing financial data']
+**Tone**: [professional / warm / direct / formal]
+**Length**: [brief (2-3 sentences) / standard (1-2 paragraphs) / detailed]
+
+**Background context** (provide one or more):
+- 'Check Asana task [task name or project] for context'
+- 'Read the Slack thread in #[channel] about [topic] from [timeframe]'
+- [Or just paste/describe the context yourself]
+
+## Guidelines
+- Get to the point in the first sentence — no 'I hope this email finds you well'
+- Be specific about what you need from the recipient and by when
+- Match ACE's professional, evidence-based tone for external emails
+- For internal emails: be direct and conversational
+- Do NOT fabricate any facts, figures, or commitments
+
+## After Drafting
+Provide:
+1. The draft email
+2. A suggested subject line
+3. Any questions or gaps ('I assumed X — is that right?')
+
+**Then I'll say 'Create as Gmail draft' to save it for my review before sending.**
+
+---
+
+**Batch mode**: 'I have 5 follow-up emails to send based on this week's Asana tasks that are overdue. Draft a short follow-up for each one asking for a status update.'",
+    tips:"The Asana and Slack context-pulling is what makes this powerful — instead of re-explaining the background, just point Claude at the task or thread. Great for follow-ups on overdue tasks, grant correspondence, and charity interview scheduling. Always create as Gmail draft, never send directly.",
+    whatWorked:"The batch mode for overdue task follow-ups is a huge time-saver — turns 20 minutes of writing individual nudge emails into 2 minutes of review. Pulling context from Asana means the emails reference specific deadlines and details without you having to look them up.",
+    whatDidnt:"For emails to external stakeholders (funders, charities), always read the full draft carefully — Claude may make assumptions about commitments or timelines. The 'questions or gaps' section helps flag these."
+  },
+  {
+    id:10,title:"Prompting Tips for Better Results",category:"guide",
+    tags:["Getting Started","Advanced"],
+    author:"Ethan E.",date:"2026-04-06",votes:0,
+    description:"Quick-reference card for writing prompts that work on the first try, with ACE-specific examples and integration patterns.",
+    content:"## Write Better Prompts
+
+**Be specific about what you want**
+Bad: 'Summarize this report'
+Good: 'Summarize this charity's theory of change in 3 paragraphs for internal review, noting uncertainties'
+
+**Provide context** — Who is the audience? What format? What tone? What length?
+
+**Show, don't tell** — Paste an example of good output. One sample beats a paragraph of description.
+
+**Say what NOT to do** — 'Do not fabricate statistics' and 'Do not use emotional language' matter as much as positive instructions.
+
+**Break big tasks into steps** — 'First extract claims, then fact-check each, then give corrected version'
+
+**Iterate, don't restart** — If 70% right, say what to fix: 'Paragraphs 2-3 are too formal. Make conversational but keep the evidence.'
+
+## Close the Loop
+The biggest efficiency gain is routing outputs somewhere useful:
+- 'Create these as Asana tasks assigned to [person] due [date]'
+- 'Post this summary to Slack in #[channel]'
+- 'Save as Gmail draft to [recipient]'
+- 'Create an Asana task to follow up on this by [date]'
+
+## ACE-Specific Defaults
+Include in any ACE-related prompt:
+- 'Do not fabricate statistics, citations, or outcomes'
+- Reference our criteria: Impact, Room for More Funding (RFMF), Organizational Health
+- 'farmed animals' not 'farm animals'; 'animal welfare' not 'animal rights'
+- Evidence-based tone: 'suggests' not 'proves'
+
+## Set It and Forget It
+Add your most-used instructions to a **Project's custom instructions** so they apply automatically. You shouldn't have to type 'do not fabricate' every time — set it once in the Project and Claude remembers.",
+    tips:"The single biggest improvement: add 'do not fabricate statistics' to every prompt. The second: route outputs to Asana or Slack instead of letting them sit in a file. The third: set up a Project with your defaults so you stop repeating yourself.",
+    whatWorked:"Team members who follow the 'close the loop' pattern report the biggest efficiency gains — it's the difference between 'Claude helped me think' and 'Claude actually moved the work forward.'",
+    whatDidnt:"Old habits are hard to break. Some people keep writing vague prompts and getting frustrated. Pair new users with someone experienced for their first 2-3 sessions."
   }
 ];
 
