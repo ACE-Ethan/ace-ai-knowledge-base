@@ -11,11 +11,32 @@ const API_KEY = '__API_KEY__';  // Must match the API_KEY in your Apps Script
 // Input validation limits (matches backend)
 const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips:2000, whatWorked:2000, whatDidnt:2000};
 
+function escapeHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function inlineMd(t){t=escapeHtml(t);t=t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");t=t.replace(/\*([^*]+?)\*/g,"<em>$1</em>");t=t.replace(/`([^`]+?)`/g,"<code class=\"md-code\">$1</code>");return t;}
+function renderMd(text){
+  if(!text)return"";
+  var lines=text.split("\n"),out=[],ul=false,ol=false;
+  function close(){if(ul){out.push("</ul>");ul=false;}if(ol){out.push("</ol>");ol=false;}}
+  for(var i=0;i<lines.length;i++){
+    var r=lines[i].trim();
+    if(/^---+$/.test(r)){close();out.push("<hr class=\"md-hr\">");continue;}
+    if(/^### /.test(r)){close();out.push("<h3 class=\"md-h3\">"+inlineMd(r.slice(4))+"</h3>");continue;}
+    if(/^## /.test(r)){close();out.push("<h2 class=\"md-h2\">"+inlineMd(r.slice(3))+"</h2>");continue;}
+    if(/^# /.test(r)){close();out.push("<h2 class=\"md-h2\">"+inlineMd(r.slice(2))+"</h2>");continue;}
+    if(/^[-*] /.test(r)){if(ol){out.push("</ol>");ol=false;}if(!ul){out.push("<ul class=\"md-ul\">");ul=true;}out.push("<li>"+inlineMd(r.slice(2))+"</li>");continue;}
+    if(/^\d+\.\s/.test(r)){if(ul){out.push("</ul>");ul=false;}if(!ol){out.push("<ol class=\"md-ol\">");ol=true;}out.push("<li>"+inlineMd(r.replace(/^\d+\.\s/,""))+"</li>");continue;}
+    close();
+    if(r===""){out.push("<div class=\"md-gap\"></div>");continue;}
+    out.push("<p class=\"md-p\">"+inlineMd(r)+"</p>");
+  }
+  close();return out.join("");
+}
+
 const CATEGORIES = {
-  prompt: { label: "Prompt", bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "\uD83D\uDCAC" },
-  skill: { label: "Skill", bg: "var(--cat-skill-bg)", color: "var(--cat-skill-text)", icon: "\u26A1" },
-  guide: { label: "Guide", bg: "var(--cat-guide-bg)", color: "var(--cat-guide-text)", icon: "\uD83D\uDCD6" },
-  example: { label: "Example", bg: "var(--cat-example-bg)", color: "var(--cat-example-text)", icon: "\uD83D\uDD0D" },
+  prompt: { label: "Prompt", desc: "A template — copy and paste into Claude", bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "💬" },
+  skill:  { label: "Skill",  desc: "A multi-step workflow or automation to set up in Claude", bg: "var(--cat-skill-bg)",  color: "var(--cat-skill-text)",   icon: "⚡" },
+  guide:  { label: "Guide",  desc: "Reference material, setup instructions, or how-to docs", bg: "var(--cat-guide-bg)",  color: "var(--cat-guide-text)",  icon: "📖" },
+  example:{ label: "Example",desc: "A real example of Claude output or a worked use case", bg: "var(--cat-example-bg)",color: "var(--cat-example-text)",icon: "🔍" },
 };
 
 const TAGS = [
@@ -87,7 +108,7 @@ function EntryCard({ entry, onClick, onVote, userVotes }) {
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
         <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
           <span style={{fontSize:"20px"}}>{cat.icon}</span>
-          <span style={{fontSize:"12px",fontWeight:600,padding:"4px 10px",borderRadius:"20px",background:cat.bg,color:cat.color}}>{cat.label}</span>
+          <span style={{fontSize:"12px",fontWeight:600,padding:"4px 10px",borderRadius:"20px",background:cat.bg,color:cat.color,cursor:"default"}}>{cat.label}</span>
         </div>
         <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} userVote={userVotes[entry.id]||0} />
       </div>
@@ -131,10 +152,10 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
           </div>
           <div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-              <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"18px"}}>{entry.category === "prompt" ? "Prompt Template" : entry.category === "skill" ? "Instructions" : "Content"}</h3>
+              <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"18px"}}>{cat.label}</h3>
               <button onClick={handleCopy} style={{fontSize:"13px",background:"var(--accent-light)",color:"var(--accent-text)",padding:"8px 16px",borderRadius:"8px",fontWeight:500,border:"none"}}>{copied ? "Copied!" : "Copy to Clipboard"}</button>
             </div>
-            <pre style={{background:"var(--code-bg)",border:"1px solid var(--code-border)",borderRadius:"8px",padding:"16px",fontSize:"13px",color:"var(--code-text)",whiteSpace:"pre-wrap",fontFamily:"monospace",lineHeight:1.6,overflowX:"auto"}}>{entry.content}</pre>
+            <div style={{lineHeight:1.6,overflowX:"auto"}} dangerouslySetInnerHTML={{__html: renderMd(entry.content)}} />
           </div>
           {entry.tips && (
             <div style={{background:"var(--blue-bg)",border:"1px solid var(--blue-border)",borderRadius:"8px",padding:"16px"}}>
@@ -391,7 +412,7 @@ function App() {
       <div style={{maxWidth:"1200px",margin:"0 auto",padding:"20px 24px"}}>
         <div style={{background:"var(--surface)",borderRadius:"12px",border:"1px solid var(--border)",padding:"16px",display:"flex",flexWrap:"wrap",gap:"12px",alignItems:"center"}}>
           <div style={{flex:1,minWidth:"250px"}}><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search prompts, skills, guides..." style={{width:"100%",border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 16px",fontSize:"14px",outline:"none",background:"var(--surface)",color:"var(--text)",boxSizing:"border-box"}} /></div>
-          <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} style={selStyle}><option value="all">All Categories</option>{Object.entries(CATEGORIES).map(([key,val]) => <option key={key} value={key}>{val.icon + " " + val.label}</option>)}</select>
+          <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} style={selStyle}><option value="all">All Categories</option>{Object.entries(CATEGORIES).map(([key,val]) => <option key={key} value={key}>{val.icon + " " + val.label + " — " + val.desc}</option>)}</select>
           <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} style={selStyle}><option value="all">All Tags</option>{usedTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}</select>
           <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); localStorage.setItem("aceKbSortBy", e.target.value); }} style={selStyle}><option value="date">Newest First</option><option value="votes">Most Helpful</option><option value="title">{"A\u2013Z"}</option></select>
         </div>
