@@ -69,7 +69,7 @@ function renderMd(text){
 }
 
 const CATEGORIES = {
-  "start-here":          { label: "Start Here",          desc: "New to Claude Cowork? Begin here for setup and essentials",  bg: "var(--cat-guide-bg)",  color: "var(--cat-guide-text)",  icon: "🚀" },
+  "start-here":          { label: "Start Here",          desc: "New to AI at ACE? Begin here for setup and essentials",  bg: "var(--cat-guide-bg)",  color: "var(--cat-guide-text)",  icon: "🚀" },
   "quick-prompts":       { label: "Quick Prompts",       desc: "A template — copy and paste into Claude",                     bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "💬" },
   "automated-workflows": { label: "Automated Workflows", desc: "A multi-step workflow or automation to set up in Claude",     bg: "var(--cat-skill-bg)",  color: "var(--cat-skill-text)",  icon: "⚡" },
   "examples":            { label: "Real ACE Examples",   desc: "A real example of Claude output from ACE's work",             bg: "var(--cat-example-bg)",color: "var(--cat-example-text)",icon: "🔍" },
@@ -438,7 +438,7 @@ function App() {
                 <div style={{width:"42px",height:"42px",background:"rgba(255,255,255,0.2)",borderRadius:"10px",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>{"\uD83E\uDDE0"}</div>
                 <h1 style={{fontSize:"28px",fontWeight:700}}>ACE AI Knowledge Base</h1>
               </div>
-              <p style={{color:"rgba(255,255,255,0.7)",fontSize:"16px"}}>Shared prompts, skills, guides and examples for Claude Cowork</p>
+              <p style={{color:"rgba(255,255,255,0.7)",fontSize:"16px"}}>Shared prompts, workflows, guides and examples for AI tools at ACE</p>
             </div>
             <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
               <div style={{fontSize:"12px",color:"rgba(255,255,255,0.5)",display:"flex",alignItems:"center"}}>
