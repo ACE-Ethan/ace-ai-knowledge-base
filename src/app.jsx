@@ -306,6 +306,7 @@ function App() {
     setView("list");
     if (!ok) showToast("Entry saved for this session but could not sync to team database.");
   }
+  function handleEdit(entry){setEditEntry(entry);setView("edit");setSelected(null)}
   async function handleEditSubmit(updated){
     setSaving(true);
     setEntries(entries.map((e) => e.id === updated.id ? updated : e));
@@ -315,6 +316,7 @@ function App() {
     setView("list");
     if (!ok) showToast("Edit saved for this session but could not sync to team database.");
   }
+  async function handleDelete(id){
     setEntries(entries.filter((e) => e.id !== id));
     setSelected(null);
     const ok = await postAction("delete",{id});
