@@ -66,17 +66,17 @@ function formatDate(d) {
   } catch(e) { return String(d); }
 }
 
-function VoteButtons({ votes, onVote }) {
+function VoteButtons({ votes, onVote, userVote }) {
   return (
     <div style={{display:"flex",alignItems:"center",gap:"6px"}}>
-      <button onClick={(e) => {e.stopPropagation();onVote(1)}} style={{background:"var(--vote-bg)",border:"none",borderRadius:"4px",padding:"2px 8px",fontSize:"16px",color:"var(--text2)",lineHeight:1.4}} title="Helpful">{"\u25B2"}</button>
+      <button onClick={(e) => {e.stopPropagation();onVote(1)}} style={{background:userVote===1?"var(--vote-active)":"var(--vote-bg)",border:"none",borderRadius:"4px",padding:"2px 8px",fontSize:"16px",color:userVote===1?"white":"var(--text2)",lineHeight:1.4,transition:"background .15s,color .15s"}} title="Helpful">{"\u25B2"}</button>
       <span style={{fontSize:"13px",fontWeight:600,color:votes>0?"var(--vote-active)":votes<0?"var(--red-text)":"var(--text3)",minWidth:"20px",textAlign:"center"}}>{votes}</span>
-      <button onClick={(e) => {e.stopPropagation();onVote(-1)}} style={{background:"var(--vote-bg)",border:"none",borderRadius:"4px",padding:"2px 8px",fontSize:"16px",color:"var(--text2)",lineHeight:1.4}} title="Not helpful">{"\u25BC"}</button>
+      <button onClick={(e) => {e.stopPropagation();onVote(-1)}} style={{background:userVote===-1?"var(--red-text)":"var(--vote-bg)",border:"none",borderRadius:"4px",padding:"2px 8px",fontSize:"16px",color:userVote===-1?"white":"var(--text2)",lineHeight:1.4,transition:"background .15s,color .15s"}} title="Not helpful">{"\u25BC"}</button>
     </div>
   );
 }
 
-function EntryCard({ entry, onClick, onVote }) {
+function EntryCard({ entry, onClick, onVote, userVotes }) {
   var cat = CATEGORIES[entry.category];
   return (
     <div onClick={() => onClick(entry)}
@@ -88,7 +88,7 @@ function EntryCard({ entry, onClick, onVote }) {
           <span style={{fontSize:"20px"}}>{cat.icon}</span>
           <span style={{fontSize:"12px",fontWeight:600,padding:"4px 10px",borderRadius:"20px",background:cat.bg,color:cat.color}}>{cat.label}</span>
         </div>
-        <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} />
+        <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} userVote={userVotes[entry.id]||0} />
       </div>
       <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"17px",lineHeight:1.3}}>{entry.title}</h3>
       <p className="line-clamp-2" style={{color:"var(--text2)",fontSize:"14px",lineHeight:1.5}}>{entry.description}</p>
@@ -103,7 +103,7 @@ function EntryCard({ entry, onClick, onVote }) {
   );
 }
 
-function EntryDetail({ entry, onBack, onVote, onEdit, onDelete }) {
+function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
   var cat = CATEGORIES[entry.category];
   const [copied, setCopied] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
@@ -116,7 +116,7 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete }) {
           <div style={{display:"flex",alignItems:"center",gap:"12px",marginBottom:"12px"}}>
             <span style={{fontSize:"28px"}}>{cat.icon}</span>
             <span style={{fontSize:"13px",fontWeight:600,background:"rgba(255,255,255,0.2)",padding:"4px 14px",borderRadius:"20px"}}>{cat.label}</span>
-            <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} />
+            <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} userVote={userVotes[entry.id]||0} />
           </div>
           <h2 style={{fontSize:"26px",fontWeight:700,margin:"0 0 8px 0"}}>{entry.title}</h2>
           <p style={{color:"rgba(255,255,255,0.7)",margin:"0 0 16px 0",fontSize:"15px"}}>{entry.description}</p>
@@ -232,6 +232,10 @@ function App() {
   const [sortBy, setSortBy] = useState("date");
   const [synced, setSynced] = useState(false);
   const [loading, setLoading] = useState(!!BACKEND_URL);
+  const [userVotes, setUserVotes] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('aceKbUserVotes') || '{}'); }
+    catch(e) { return {}; }
+  });
 
   useEffect(() => {document.body.className = dark ? "dark" : ""},[dark]);
   useEffect(() => {
@@ -249,10 +253,26 @@ function App() {
     }
   },[]);
 
-  function handleVote(id, delta) {
-    setEntries(entries.map((e) => e.id === id ? {...e, votes: e.votes + delta} : e));
-    if(selected && selected.id === id) setSelected({...selected, votes: selected.votes + delta});
-    postAction('vote', {id, delta});
+  function handleVote(id, direction) {
+    const prev = userVotes[id] || 0;
+    if (prev === direction) {
+      const newUV = {...userVotes};
+      delete newUV[id];
+      setUserVotes(newUV);
+      localStorage.setItem("aceKbUserVotes", JSON.stringify(newUV));
+      const delta = -direction;
+      setEntries(entries.map((e) => e.id === id ? {...e, votes: e.votes + delta} : e));
+      if(selected && selected.id === id) setSelected({...selected, votes: selected.votes + delta});
+      postAction("vote", {id, delta});
+    } else {
+      const newUV = {...userVotes, [id]: direction};
+      setUserVotes(newUV);
+      localStorage.setItem("aceKbUserVotes", JSON.stringify(newUV));
+      const delta = direction - prev;
+      setEntries(entries.map((e) => e.id === id ? {...e, votes: e.votes + delta} : e));
+      if(selected && selected.id === id) setSelected({...selected, votes: selected.votes + delta});
+      postAction("vote", {id, delta});
+    }
   }
   function handleAdd(entry){setEntries([entry, ...entries]);setView("list");postAction('add',{entry})}
   function handleEdit(entry){setEditEntry(entry);setView("edit");setSelected(null)}
@@ -277,7 +297,7 @@ function App() {
   var selStyle = {border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",background:"var(--surface)",color:"var(--text)",outline:"none"};
 
   if(loading) return (<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"var(--text2)",fontSize:"16px"}}>Loading knowledge base...</p></div>);
-  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} /></div>);
+  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
   if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} /></div>);
   if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} /></div>);
 
@@ -337,7 +357,7 @@ function App() {
           </div>
         ) : (
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:"20px"}}>
-            {filtered.map((entry) => <EntryCard key={entry.id} entry={entry} onClick={setSelected} onVote={handleVote} />)}
+            {filtered.map((entry) => <EntryCard key={entry.id} entry={entry} onClick={setSelected} onVote={handleVote} userVotes={userVotes} />)}
           </div>
         )}
       </div>
