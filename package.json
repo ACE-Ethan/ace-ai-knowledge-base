@@ -1,0 +1,11 @@
+{
+  "name": "ace-ai-knowledge-base",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p dist && babel src/app.jsx -o dist/app.js && cp index.html dist/index.html"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.24.0",
+    "@babel/preset-react": "^7.24.0"
+  }
+}
