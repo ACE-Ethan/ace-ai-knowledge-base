@@ -9,7 +9,7 @@ const API_KEY = '__API_KEY__';  // Must match the API_KEY in your Apps Script
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 // Input validation limits (matches backend)
-const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips:2000, whatWorked:2000, whatDidnt:2000};
+const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips:2000, whatWorked:2000, whatDidnt:2000, colleagueNotes:5000};
 
 function escapeHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function inlineMd(t){t=escapeHtml(t);t=t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");t=t.replace(/\*([^*]+?)\*/g,"<em>$1</em>");t=t.replace(/`([^`]+?)`/g,"<code class=\"md-code\">$1</code>");return t;}
@@ -33,10 +33,10 @@ function renderMd(text){
 }
 
 const CATEGORIES = {
-  prompt: { label: "Prompt", desc: "A template — copy and paste into Claude", bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "💬" },
-  skill:  { label: "Skill",  desc: "A multi-step workflow or automation to set up in Claude", bg: "var(--cat-skill-bg)",  color: "var(--cat-skill-text)",   icon: "⚡" },
-  guide:  { label: "Guide",  desc: "Reference material, setup instructions, or how-to docs", bg: "var(--cat-guide-bg)",  color: "var(--cat-guide-text)",  icon: "📖" },
-  example:{ label: "Example",desc: "A real example of Claude output or a worked use case", bg: "var(--cat-example-bg)",color: "var(--cat-example-text)",icon: "🔍" },
+  "start-here":          { label: "Start Here",          desc: "New to Claude Cowork? Begin here for setup and essentials",  bg: "var(--cat-guide-bg)",  color: "var(--cat-guide-text)",  icon: "🚀" },
+  "quick-prompts":       { label: "Quick Prompts",       desc: "A template — copy and paste into Claude",                     bg: "var(--cat-prompt-bg)", color: "var(--cat-prompt-text)", icon: "💬" },
+  "automated-workflows": { label: "Automated Workflows", desc: "A multi-step workflow or automation to set up in Claude",     bg: "var(--cat-skill-bg)",  color: "var(--cat-skill-text)",  icon: "⚡" },
+  "examples":            { label: "Real ACE Examples",   desc: "A real example of Claude output from ACE's work",             bg: "var(--cat-example-bg)",color: "var(--cat-example-text)",icon: "🔍" },
 };
 
 const TAGS = [
@@ -99,7 +99,7 @@ function VoteButtons({ votes, onVote, userVote }) {
 }
 
 function EntryCard({ entry, onClick, onVote, userVotes }) {
-  var cat = CATEGORIES[entry.category];
+  var cat = CATEGORIES[entry.category] || { label: entry.category || "Uncategorized", desc: "", bg: "var(--surface2)", color: "var(--text2)", icon: "📄" };
   return (
     <div onClick={() => onClick(entry)}
       style={{background:"var(--surface)",borderRadius:"12px",border:"1px solid var(--border)",padding:"20px",cursor:"pointer",display:"flex",flexDirection:"column",gap:"12px",transition:"all .2s",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"}}
@@ -126,7 +126,7 @@ function EntryCard({ entry, onClick, onVote, userVotes }) {
 }
 
 function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
-  var cat = CATEGORIES[entry.category];
+  var cat = CATEGORIES[entry.category] || { label: entry.category || "Uncategorized", desc: "", bg: "var(--surface2)", color: "var(--text2)", icon: "📄" };
   const [copied, setCopied] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   function handleCopy(){navigator.clipboard.writeText(entry.content).then(() => {setCopied(true);setTimeout(() => setCopied(false),2000)})}
@@ -177,6 +177,25 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
               </div>
             )}
           </div>
+          {entry.colleagueNotes && entry.colleagueNotes.trim() && (
+            <div>
+              <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"18px",marginBottom:"12px"}}>What colleagues said</h3>
+              <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
+                {entry.colleagueNotes.split("|").map((note, i) => {
+                  var t = note.trim();
+                  if (!t) return null;
+                  var idx = t.indexOf(":");
+                  var name = idx > -1 ? t.slice(0, idx).trim() : "";
+                  var comment = idx > -1 ? t.slice(idx + 1).trim() : t;
+                  return (
+                    <blockquote key={i} style={{margin:0,padding:"12px 16px",background:"var(--surface2)",borderLeft:"3px solid var(--accent)",borderRadius:"6px",fontSize:"14px",lineHeight:1.5,color:"var(--text)"}}>
+                      {name && <strong style={{color:"var(--accent-text)"}}>{name}: </strong>}{comment}
+                    </blockquote>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div style={{display:"flex",gap:"12px",paddingTop:"16px",borderTop:"1px solid var(--border)"}}>
             <button onClick={() => onEdit(entry)} style={{flex:1,padding:"10px",borderRadius:"8px",border:"1px solid var(--border)",background:"var(--surface)",color:"var(--text)",fontWeight:500,fontSize:"14px"}}>{"\u270F\uFE0F Edit Entry"}</button>
             {!confirmDel ?
@@ -192,7 +211,7 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
 
 function EntryForm({ onSubmit, onCancel, existing, saving }) {
   var isEdit = !!existing;
-  const [form, setForm] = useState(existing || {title:"",category:"prompt",description:"",content:"",tips:"",whatWorked:"",whatDidnt:"",tags:[],author:"",votes:0});
+  const [form, setForm] = useState(existing || {title:"",category:"quick-prompts",description:"",content:"",tips:"",whatWorked:"",whatDidnt:"",colleagueNotes:"",tags:[],author:"",votes:0});
   const [tagInput, setTagInput] = useState("");
   function addTag(){if(tagInput.trim() && form.tags.indexOf(tagInput.trim()) === -1){setForm({...form,tags:[...form.tags,tagInput.trim()]});setTagInput("")}}
   function removeTag(tag){setForm({...form,tags:form.tags.filter((t) => t !== tag)})}
@@ -231,6 +250,7 @@ function EntryForm({ onSubmit, onCancel, existing, saving }) {
           <div style={{display:"flex",flexWrap:"wrap",gap:"6px"}}>{form.tags.map((tag) => <span key={tag} style={{fontSize:"12px",background:"var(--accent-light)",color:"var(--accent-text)",padding:"4px 10px",borderRadius:"20px",display:"flex",alignItems:"center",gap:"4px"}}>{tag}<button type="button" onClick={() => removeTag(tag)} style={{background:"none",border:"none",color:"var(--accent-text)",fontSize:"14px",padding:0}}>{"\u00D7"}</button></span>)}</div>
         </div>
         <div><label style={lbl}>Tips for Others</label><textarea value={form.tips} onChange={(e) => setForm({...form,tips:e.target.value})} rows={2} style={inp} placeholder="Any tips for getting better results?" /></div>
+        <div><label style={lbl}>Colleague Notes (optional)</label><textarea value={form.colleagueNotes||""} onChange={(e) => setForm({...form,colleagueNotes:e.target.value})} rows={3} style={inp} placeholder="Name: comment | Name: comment" /></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"16px"}}>
           <div><label style={lbl}>What Worked Well</label><textarea value={form.whatWorked} onChange={(e) => setForm({...form,whatWorked:e.target.value})} rows={2} style={inp} placeholder="What results did you get?" /></div>
           <div><label style={lbl}>What Didn't Work</label><textarea value={form.whatDidnt} onChange={(e) => setForm({...form,whatDidnt:e.target.value})} rows={2} style={inp} placeholder="Any gotchas or limitations?" /></div>
@@ -351,14 +371,14 @@ function App() {
       var mt = tagFilter === "all" || e.tags.includes(tagFilter);
       return ms && mc && mt;
     });
-    if(sortBy === "date") result.sort((a,b) => b.date.localeCompare(a.date));
+    if(sortBy === "date") result.sort((a,b) => { if (a.category === "start-here" && b.category !== "start-here") return -1; if (b.category === "start-here" && a.category !== "start-here") return 1; return b.date.localeCompare(a.date); });
     else if(sortBy === "votes") result.sort((a,b) => b.votes - a.votes);
     else if(sortBy === "title") result.sort((a,b) => a.title.localeCompare(b.title));
     return result;
   },[entries,search,catFilter,tagFilter,sortBy]);
 
   const usedTags = useMemo(() => [...new Set(entries.flatMap((e) => e.tags))].sort(),[entries]);
-  const stats = useMemo(() => ({total:entries.length,prompts:entries.filter((e) => e.category==="prompt").length,skills:entries.filter((e) => e.category==="skill").length,guides:entries.filter((e) => e.category==="guide").length,examples:entries.filter((e) => e.category==="example").length}),[entries]);
+  const stats = useMemo(() => ({total:entries.length,startHere:entries.filter((e) => e.category==="start-here").length,quickPrompts:entries.filter((e) => e.category==="quick-prompts").length,automatedWorkflows:entries.filter((e) => e.category==="automated-workflows").length,examples:entries.filter((e) => e.category==="examples").length}),[entries]);
   const lastUpdated = useMemo(() => {
     if (!entries.length) return "";
     const latest = entries.reduce((max, e) => e.date > max ? e.date : max, entries[0].date);
@@ -393,7 +413,7 @@ function App() {
             </div>
           </div>
           <div style={{display:"flex",gap:"20px",marginTop:"24px",flexWrap:"wrap"}}>
-            {[{l:"Total",c:stats.total,b:"rgba(255,255,255,0.2)"},{l:"Prompts",c:stats.prompts,b:"rgba(255,255,255,0.1)"},{l:"Skills",c:stats.skills,b:"rgba(255,255,255,0.1)"},{l:"Guides",c:stats.guides,b:"rgba(255,255,255,0.1)"},{l:"Examples",c:stats.examples,b:"rgba(255,255,255,0.1)"}].map((s) => (
+            {[{l:"Total",c:stats.total,b:"rgba(255,255,255,0.2)"},{l:"Start Here",c:stats.startHere,b:"rgba(255,255,255,0.1)"},{l:"Quick Prompts",c:stats.quickPrompts,b:"rgba(255,255,255,0.1)"},{l:"Automated",c:stats.automatedWorkflows,b:"rgba(255,255,255,0.1)"},{l:"Examples",c:stats.examples,b:"rgba(255,255,255,0.1)"}].map((s) => (
               <div key={s.l} style={{background:s.b,borderRadius:"8px",padding:"8px 18px",textAlign:"center"}}>
                 <div style={{fontSize:"24px",fontWeight:700}}>{s.c}</div>
                 <div style={{fontSize:"11px",color:"rgba(255,255,255,0.5)"}}>{s.l}</div>
