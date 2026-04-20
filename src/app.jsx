@@ -51,10 +51,11 @@ async function seedBackend(entries) {
   }
 }
 async function postAction(action, payload) {
-  if (!BACKEND_URL) return;
+  if (!BACKEND_URL) return true;
   try {
-    await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action, key:API_KEY, ...payload}) });
-  } catch(e) { console.log('Backend post failed:', e); }
+    const res = await fetch(BACKEND_URL, { method:'POST', redirect:'follow', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({action, key:API_KEY, ...payload}) });
+    return res.ok;
+  } catch(e) { console.log('Backend post failed', e); return false; }
 }
 
 function formatDate(d) {
@@ -220,6 +221,17 @@ function EntryForm({ onSubmit, onCancel, existing }) {
   );
 }
 
+function Toast({ toast, onClose }) {
+  if (!toast) return null;
+  var bg = toast.type === "error" ? "var(--red-head)" : "var(--accent-dark)";
+  return (
+    <div style={{position:"fixed",bottom:"24px",right:"24px",zIndex:1000,background:bg,color:"white",padding:"12px 16px",borderRadius:"8px",maxWidth:"360px",fontSize:"14px",lineHeight:1.4,boxShadow:"0 4px 12px rgba(0,0,0,0.25)",display:"flex",alignItems:"flex-start",gap:"10px"}}>
+      <span style={{flex:1}}>{toast.msg}</span>
+      <button onClick={onClose} style={{background:"none",border:"none",color:"white",fontSize:"20px",padding:0,lineHeight:1,cursor:"pointer",flexShrink:0,marginTop:"-2px"}}>×</button>
+    </div>
+  );
+}
+
 function App() {
   const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
   const [entries, setEntries] = useState(INITIAL_ENTRIES);
@@ -232,6 +244,11 @@ function App() {
   const [sortBy, setSortBy] = useState("date");
   const [synced, setSynced] = useState(false);
   const [loading, setLoading] = useState(!!BACKEND_URL);
+  const [toast, setToast] = React.useState(null);
+  function showToast(msg, type) {
+    setToast({msg, type: type || "error"});
+    setTimeout(() => setToast(null), 5000);
+  }
   const [userVotes, setUserVotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aceKbUserVotes') || '{}'); }
     catch(e) { return {}; }
@@ -263,7 +280,7 @@ function App() {
       const delta = -direction;
       setEntries(entries.map((e) => e.id === id ? {...e, votes: e.votes + delta} : e));
       if(selected && selected.id === id) setSelected({...selected, votes: selected.votes + delta});
-      postAction("vote", {id, delta});
+      postAction("vote", {id, delta}).then(ok => { if (!ok) showToast("Vote saved locally but could not sync to team."); });
     } else {
       const newUV = {...userVotes, [id]: direction};
       setUserVotes(newUV);
@@ -271,13 +288,29 @@ function App() {
       const delta = direction - prev;
       setEntries(entries.map((e) => e.id === id ? {...e, votes: e.votes + delta} : e));
       if(selected && selected.id === id) setSelected({...selected, votes: selected.votes + delta});
-      postAction("vote", {id, delta});
+      postAction("vote", {id, delta}).then(ok => { if (!ok) showToast("Vote saved locally but could not sync to team."); });
     }
   }
-  function handleAdd(entry){setEntries([entry, ...entries]);setView("list");postAction('add',{entry})}
+  async function handleAdd(entry){
+    setEntries([entry, ...entries]);
+    setView("list");
+    const ok = await postAction("add",{entry});
+    if (!ok) showToast("Entry saved for this session but could not sync to team database.");
+  }
   function handleEdit(entry){setEditEntry(entry);setView("edit");setSelected(null)}
-  function handleEditSubmit(updated){setEntries(entries.map((e) => e.id === updated.id ? updated : e));setView("list");setEditEntry(null);postAction('edit',{entry:updated})}
-  function handleDelete(id){setEntries(entries.filter((e) => e.id !== id));setSelected(null);postAction('delete',{id})}
+  async function handleEditSubmit(updated){
+    setEntries(entries.map((e) => e.id === updated.id ? updated : e));
+    setView("list");
+    setEditEntry(null);
+    const ok = await postAction("edit",{entry:updated});
+    if (!ok) showToast("Edit saved for this session but could not sync to team database.");
+  }
+  async function handleDelete(id){
+    setEntries(entries.filter((e) => e.id !== id));
+    setSelected(null);
+    const ok = await postAction("delete",{id});
+    if (!ok) showToast("Could not delete from team database. Refresh to see current state.");
+  }
 
   const filtered = useMemo(() => {
     var result = entries.filter((e) => {
@@ -296,10 +329,10 @@ function App() {
   const stats = useMemo(() => ({total:entries.length,prompts:entries.filter((e) => e.category==="prompt").length,skills:entries.filter((e) => e.category==="skill").length,guides:entries.filter((e) => e.category==="guide").length,examples:entries.filter((e) => e.category==="example").length}),[entries]);
   var selStyle = {border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",background:"var(--surface)",color:"var(--text)",outline:"none"};
 
-  if(loading) return (<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><p style={{color:"var(--text2)",fontSize:"16px"}}>Loading knowledge base...</p></div>);
-  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
-  if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} /></div>);
-  if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} /></div>);
+  if(loading) return (<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><Toast toast={toast} onClose={() => setToast(null)} /><p style={{color:"var(--text2)",fontSize:"16px"}}>Loading knowledge base...</p></div>);
+  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
+  if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} /></div>);
+  if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} /></div>);
 
   return (
     <div style={{minHeight:"100vh",background:"var(--bg)"}}>
@@ -363,6 +396,7 @@ function App() {
       </div>
       <div style={{borderTop:"1px solid var(--border)",background:"var(--surface)",padding:"16px 0"}}>
         <div style={{maxWidth:"1200px",margin:"0 auto",padding:"0 24px",textAlign:"center",fontSize:"13px",color:"var(--text3)"}}>{"Animal Charity Evaluators \u2014 AI Knowledge Base \u00B7 Updated " + new Date().toLocaleDateString()}</div>
+      <Toast toast={toast} onClose={() => setToast(null)} />
       </div>
     </div>
   );
