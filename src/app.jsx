@@ -13,12 +13,46 @@ const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips
 
 function escapeHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function inlineMd(t){t=escapeHtml(t);t=t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");t=t.replace(/\*([^*]+?)\*/g,"<em>$1</em>");t=t.replace(/`([^`]+?)`/g,"<code class=\"md-code\">$1</code>");return t;}
+function parseTags(t) {
+  if (Array.isArray(t)) return t;
+  if (typeof t !== "string") return [];
+  var s = t.trim();
+  if (!s) return [];
+  if (s.charAt(0) === "[") {
+    try { var p = JSON.parse(s); if (Array.isArray(p)) return p.map(String); } catch(e) {}
+  }
+  return s.split(",").map(function(x){return x.trim();}).filter(Boolean);
+}
+if (typeof window !== "undefined") {
+  window.copyCodeBlock = function(btn) {
+    var wrap = btn.parentElement;
+    var code = wrap && wrap.querySelector("code");
+    if (!code) return;
+    navigator.clipboard.writeText(code.textContent).then(function() {
+      var orig = btn.textContent;
+      btn.textContent = "Copied!";
+      setTimeout(function() { btn.textContent = orig; }, 1500);
+    });
+  };
+}
 function renderMd(text){
-  if(!text)return"";
-  var lines=text.split("\n"),out=[],ul=false,ol=false;
-  function close(){if(ul){out.push("</ul>");ul=false;}if(ol){out.push("</ol>");ol=false;}}
-  for(var i=0;i<lines.length;i++){
-    var r=lines[i].trim();
+  if(!text) return "";
+  var lines = text.split("\n"), out = [], ul = false, ol = false, inCode = false, codeLines = [];
+  function close() { if(ul){out.push("</ul>");ul=false;} if(ol){out.push("</ol>");ol=false;} }
+  function flushCode() {
+    var body = codeLines.join("\n").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    out.push('<div class="md-codeblock-wrap"><pre class="md-codeblock"><code>' + body + '</code></pre><button class="md-copy-btn" onclick="copyCodeBlock(this)">Copy</button></div>');
+    codeLines = [];
+  }
+  for(var i = 0; i < lines.length; i++) {
+    var raw = lines[i];
+    var r = raw.trim();
+    if(/^```/.test(r)) {
+      if(inCode) { flushCode(); inCode = false; }
+      else { close(); inCode = true; }
+      continue;
+    }
+    if(inCode) { codeLines.push(raw); continue; }
     if(/^---+$/.test(r)){close();out.push("<hr class=\"md-hr\">");continue;}
     if(/^### /.test(r)){close();out.push("<h3 class=\"md-h3\">"+inlineMd(r.slice(4))+"</h3>");continue;}
     if(/^## /.test(r)){close();out.push("<h2 class=\"md-h2\">"+inlineMd(r.slice(3))+"</h2>");continue;}
@@ -29,7 +63,9 @@ function renderMd(text){
     if(r===""){out.push("<div class=\"md-gap\"></div>");continue;}
     out.push("<p class=\"md-p\">"+inlineMd(r)+"</p>");
   }
-  close();return out.join("");
+  if(inCode) flushCode();
+  close();
+  return out.join("");
 }
 
 const CATEGORIES = {
@@ -62,6 +98,7 @@ async function fetchEntries() {
   try {
     var res = await fetch(BACKEND_URL);
     var data = await res.json();
+    if (Array.isArray(data)) data.forEach(function(e) { e.tags = parseTags(e.tags); });
     return { connected: true, data: data.length > 0 ? data : null };
   } catch(e) { console.log('Backend fetch failed, using local data:', e); return { connected: false, data: null }; }
 }
