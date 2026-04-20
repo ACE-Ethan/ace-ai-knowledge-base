@@ -169,7 +169,7 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
   );
 }
 
-function EntryForm({ onSubmit, onCancel, existing }) {
+function EntryForm({ onSubmit, onCancel, existing, saving }) {
   var isEdit = !!existing;
   const [form, setForm] = useState(existing || {title:"",category:"prompt",description:"",content:"",tips:"",whatWorked:"",whatDidnt:"",tags:[],author:"",votes:0});
   const [tagInput, setTagInput] = useState("");
@@ -215,7 +215,7 @@ function EntryForm({ onSubmit, onCancel, existing }) {
           <div><label style={lbl}>What Didn't Work</label><textarea value={form.whatDidnt} onChange={(e) => setForm({...form,whatDidnt:e.target.value})} rows={2} style={inp} placeholder="Any gotchas or limitations?" /></div>
         </div>
         {formError && <div style={{background:"var(--red-bg)",border:"1px solid var(--red-border)",borderRadius:"8px",padding:"12px 16px",color:"var(--red-text)",fontSize:"14px"}}>{formError}</div>}
-        <button type="submit" style={{width:"100%",background:"var(--accent)",color:"white",padding:"14px",borderRadius:"8px",fontWeight:600,fontSize:"14px",border:"none"}}>{isEdit ? "Save Changes" : "Add Entry to Knowledge Base"}</button>
+        <button type="submit" disabled={saving} style={{opacity:saving?0.6:1,width:"100%",background:"var(--accent)",color:"white",padding:"14px",borderRadius:"8px",fontWeight:600,fontSize:"14px",border:"none"}}>{saving ? "Saving..." : isEdit ? "Save Changes" : "Add Entry to Knowledge Base"}</button>
       </form>
     </div>
   );
@@ -233,7 +233,10 @@ function Toast({ toast, onClose }) {
 }
 
 function App() {
-  const [dark, setDark] = useState(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const [dark, setDark] = useState(() => {
+    const s = localStorage.getItem("aceKbDark");
+    return s !== null ? s === "true" : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  });
   const [entries, setEntries] = useState(INITIAL_ENTRIES);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
@@ -241,7 +244,7 @@ function App() {
   const [selected, setSelected] = useState(null);
   const [view, setView] = useState("list");
   const [editEntry, setEditEntry] = useState(null);
-  const [sortBy, setSortBy] = useState("date");
+  const [sortBy, setSortBy] = useState(() => localStorage.getItem("aceKbSortBy") || "date");
   const [synced, setSynced] = useState(false);
   const [loading, setLoading] = useState(!!BACKEND_URL);
   const [toast, setToast] = React.useState(null);
@@ -249,6 +252,7 @@ function App() {
     setToast({msg, type: type || "error"});
     setTimeout(() => setToast(null), 5000);
   }
+  const [saving, setSaving] = useState(false);
   const [userVotes, setUserVotes] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aceKbUserVotes') || '{}'); }
     catch(e) { return {}; }
@@ -263,7 +267,10 @@ function App() {
           setEntries(result.data);
         } else if(result.connected) {
           // Sheet is connected but empty — seed it with starter entries
-          seedBackend(INITIAL_ENTRIES);
+          if (!localStorage.getItem("aceKbSeeded")) {
+            localStorage.setItem("aceKbSeeded", "true");
+            seedBackend(INITIAL_ENTRIES);
+          }
         }
         setLoading(false);
       });
@@ -292,20 +299,22 @@ function App() {
     }
   }
   async function handleAdd(entry){
+    setSaving(true);
     setEntries([entry, ...entries]);
-    setView("list");
     const ok = await postAction("add",{entry});
+    setSaving(false);
+    setView("list");
     if (!ok) showToast("Entry saved for this session but could not sync to team database.");
   }
-  function handleEdit(entry){setEditEntry(entry);setView("edit");setSelected(null)}
   async function handleEditSubmit(updated){
+    setSaving(true);
     setEntries(entries.map((e) => e.id === updated.id ? updated : e));
-    setView("list");
     setEditEntry(null);
     const ok = await postAction("edit",{entry:updated});
+    setSaving(false);
+    setView("list");
     if (!ok) showToast("Edit saved for this session but could not sync to team database.");
   }
-  async function handleDelete(id){
     setEntries(entries.filter((e) => e.id !== id));
     setSelected(null);
     const ok = await postAction("delete",{id});
@@ -327,12 +336,17 @@ function App() {
 
   const usedTags = useMemo(() => [...new Set(entries.flatMap((e) => e.tags))].sort(),[entries]);
   const stats = useMemo(() => ({total:entries.length,prompts:entries.filter((e) => e.category==="prompt").length,skills:entries.filter((e) => e.category==="skill").length,guides:entries.filter((e) => e.category==="guide").length,examples:entries.filter((e) => e.category==="example").length}),[entries]);
-  var selStyle = {border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",background:"var(--surface)",color:"var(--text)",outline:"none"};
+  const lastUpdated = useMemo(() => {
+    if (!entries.length) return "";
+    const latest = entries.reduce((max, e) => e.date > max ? e.date : max, entries[0].date);
+    return formatDate(latest);
+  }, [entries]);
+  var selStyle = {flex:"1 1 130px",border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",background:"var(--surface)",color:"var(--text)",outline:"none"};
 
   if(loading) return (<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><Toast toast={toast} onClose={() => setToast(null)} /><p style={{color:"var(--text2)",fontSize:"16px"}}>Loading knowledge base...</p></div>);
   if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
-  if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} /></div>);
-  if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} /></div>);
+  if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} saving={saving} /></div>);
+  if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} saving={saving} /></div>);
 
   return (
     <div style={{minHeight:"100vh",background:"var(--bg)"}}>
@@ -351,7 +365,7 @@ function App() {
                 <span className={"sync-dot " + (synced ? "connected" : "local")}></span>
                 {synced ? "Synced" : "Local only"}
               </div>
-              <button onClick={() => setDark(!dark)} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"8px 14px",color:"white",fontSize:"18px",display:"flex",alignItems:"center"}} title="Toggle dark mode">{dark ? "\u2600\uFE0F" : "\uD83C\uDF19"}</button>
+              <button onClick={() => { const nd = !dark; setDark(nd); localStorage.setItem("aceKbDark", nd); }} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"8px",padding:"8px 14px",color:"white",fontSize:"18px",display:"flex",alignItems:"center"}} title="Toggle dark mode">{dark ? "\u2600\uFE0F" : "\uD83C\uDF19"}</button>
               <button onClick={() => setView("add")} style={{background:"white",color:"#00695C",padding:"10px 20px",borderRadius:"8px",fontWeight:600,border:"none",fontSize:"14px",boxShadow:"0 2px 4px rgba(0,0,0,0.1)"}}>+ Add Entry</button>
             </div>
           </div>
@@ -377,7 +391,7 @@ function App() {
           <div style={{flex:1,minWidth:"250px"}}><input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search prompts, skills, guides..." style={{width:"100%",border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 16px",fontSize:"14px",outline:"none",background:"var(--surface)",color:"var(--text)",boxSizing:"border-box"}} /></div>
           <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} style={selStyle}><option value="all">All Categories</option>{Object.entries(CATEGORIES).map(([key,val]) => <option key={key} value={key}>{val.icon + " " + val.label}</option>)}</select>
           <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)} style={selStyle}><option value="all">All Tags</option>{usedTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}</select>
-          <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} style={selStyle}><option value="date">Newest First</option><option value="votes">Most Helpful</option><option value="title">{"A\u2013Z"}</option></select>
+          <select value={sortBy} onChange={(e) => { setSortBy(e.target.value); localStorage.setItem("aceKbSortBy", e.target.value); }} style={selStyle}><option value="date">Newest First</option><option value="votes">Most Helpful</option><option value="title">{"A\u2013Z"}</option></select>
         </div>
       </div>
       <div style={{maxWidth:"1200px",margin:"0 auto",padding:"0 24px 48px"}}>
@@ -395,7 +409,7 @@ function App() {
         )}
       </div>
       <div style={{borderTop:"1px solid var(--border)",background:"var(--surface)",padding:"16px 0"}}>
-        <div style={{maxWidth:"1200px",margin:"0 auto",padding:"0 24px",textAlign:"center",fontSize:"13px",color:"var(--text3)"}}>{"Animal Charity Evaluators \u2014 AI Knowledge Base \u00B7 Updated " + new Date().toLocaleDateString()}</div>
+        <div style={{maxWidth:"1200px",margin:"0 auto",padding:"0 24px",textAlign:"center",fontSize:"13px",color:"var(--text3)"}}>{"Animal Charity Evaluators \u2014 AI Knowledge Base \u00B7 Updated " + lastUpdated}</div>
       <Toast toast={toast} onClose={() => setToast(null)} />
       </div>
     </div>
