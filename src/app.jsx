@@ -49,6 +49,16 @@ if (typeof window !== "undefined" && typeof document !== "undefined" && !window.
     });
   });
 }
+function isTableSep(s) {
+  var t = s.trim();
+  return /^\|?\s*:?-+:?\s*(\|\s*:?-+:?\s*)+\|?$/.test(t);
+}
+function splitRow(s) {
+  var t = s.trim();
+  if (t.charAt(0) === "|") t = t.slice(1);
+  if (t.charAt(t.length-1) === "|") t = t.slice(0,-1);
+  return t.split("|").map(function(c){return c.trim();});
+}
 function renderMd(text){
   if(!text) return "";
   var lines = text.split("\n"), out = [], ul = false, ol = false, inCode = false, codeLines = [];
@@ -67,6 +77,29 @@ function renderMd(text){
       continue;
     }
     if(inCode) { codeLines.push(raw); continue; }
+    // Table: header row starting with | followed by a separator row of dashes
+    if (/^\|.+\|/.test(r) && i+1 < lines.length && isTableSep(lines[i+1])) {
+      close();
+      var headers = splitRow(r);
+      var rows = [];
+      i += 2;
+      while (i < lines.length && /^\|.+\|/.test(lines[i].trim())) {
+        rows.push(splitRow(lines[i]));
+        i++;
+      }
+      i--;
+      var tbl = '<div class="md-table-wrap"><table class="md-table"><thead><tr>';
+      headers.forEach(function(h){ tbl += "<th>" + inlineMd(h) + "</th>"; });
+      tbl += "</tr></thead><tbody>";
+      rows.forEach(function(row){
+        tbl += "<tr>";
+        row.forEach(function(c){ tbl += "<td>" + inlineMd(c) + "</td>"; });
+        tbl += "</tr>";
+      });
+      tbl += "</tbody></table></div>";
+      out.push(tbl);
+      continue;
+    }
     if(/^---+$/.test(r)){close();out.push("<hr class=\"md-hr\">");continue;}
     if(/^### /.test(r)){close();out.push("<h3 class=\"md-h3\">"+inlineMd(r.slice(4))+"</h3>");continue;}
     if(/^## /.test(r)){close();out.push("<h2 class=\"md-h2\">"+inlineMd(r.slice(3))+"</h2>");continue;}
