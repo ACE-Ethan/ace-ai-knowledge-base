@@ -38,6 +38,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Cache-bust app.js
+        run: sed -i "s|<script src=\"app.js\"></script>|<script src=\"app.js?v=${GITHUB_SHA}\"></script>|" dist/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
