@@ -14,17 +14,31 @@ const MAX_LENGTHS = {title:200, author:100, description:500, content:20000, tips
 function escapeHtml(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function inlineMd(t){t=escapeHtml(t);t=t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>");t=t.replace(/\*([^*]+?)\*/g,"<em>$1</em>");t=t.replace(/`([^`]+?)`/g,"<code class=\"md-code\">$1</code>");return t;}
 function parseTags(t) {
-  if (Array.isArray(t)) return t;
-  if (typeof t !== "string") return [];
-  var s = t.trim();
-  if (!s) return [];
-  if (s.charAt(0) === "[") {
-    try { var p = JSON.parse(s); if (Array.isArray(p)) return p.map(String); } catch(e) {}
+  function clean(arr) {
+    return arr.map(function(x){ return String(x).replace(/[\[\]"]/g, "").trim(); }).filter(Boolean);
   }
-  return s.split(",").map(function(x){return x.trim();}).filter(Boolean);
+  if (Array.isArray(t)) {
+    var joined = t.map(String).join(",").trim();
+    if (joined.charAt(0) === "[") {
+      try { var p = JSON.parse(joined); if (Array.isArray(p)) return p.map(String); } catch(e) {}
+    }
+    return clean(t);
+  }
+  if (typeof t === "string") {
+    var s = t.trim();
+    if (!s) return [];
+    if (s.charAt(0) === "[") {
+      try { var p2 = JSON.parse(s); if (Array.isArray(p2)) return p2.map(String); } catch(e) {}
+    }
+    return clean(s.split(","));
+  }
+  return [];
 }
-if (typeof window !== "undefined") {
-  window.copyCodeBlock = function(btn) {
+if (typeof window !== "undefined" && typeof document !== "undefined" && !window.__aceKbCopyInit) {
+  window.__aceKbCopyInit = true;
+  document.addEventListener("click", function(e) {
+    var btn = e.target;
+    if (!btn || !btn.classList || !btn.classList.contains("md-copy-btn")) return;
     var wrap = btn.parentElement;
     var code = wrap && wrap.querySelector("code");
     if (!code) return;
@@ -33,7 +47,7 @@ if (typeof window !== "undefined") {
       btn.textContent = "Copied!";
       setTimeout(function() { btn.textContent = orig; }, 1500);
     });
-  };
+  });
 }
 function renderMd(text){
   if(!text) return "";
@@ -41,7 +55,7 @@ function renderMd(text){
   function close() { if(ul){out.push("</ul>");ul=false;} if(ol){out.push("</ol>");ol=false;} }
   function flushCode() {
     var body = codeLines.join("\n").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    out.push('<div class="md-codeblock-wrap"><pre class="md-codeblock"><code>' + body + '</code></pre><button class="md-copy-btn" onclick="copyCodeBlock(this)">Copy</button></div>');
+    out.push('<div class="md-codeblock-wrap"><pre class="md-codeblock"><code>' + body + '</code></pre><button class="md-copy-btn">Copy</button></div>');
     codeLines = [];
   }
   for(var i = 0; i < lines.length; i++) {
@@ -164,9 +178,7 @@ function EntryCard({ entry, onClick, onVote, userVotes }) {
 
 function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
   var cat = CATEGORIES[entry.category] || { label: entry.category || "Uncategorized", desc: "", bg: "var(--surface2)", color: "var(--text2)", icon: "📄" };
-  const [copied, setCopied] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
-  function handleCopy(){navigator.clipboard.writeText(entry.content).then(() => {setCopied(true);setTimeout(() => setCopied(false),2000)})}
   return (
     <div style={{maxWidth:"900px",margin:"0 auto"}}>
       <button onClick={onBack} style={{display:"flex",alignItems:"center",gap:"8px",color:"var(--accent)",background:"none",border:"none",fontWeight:500,fontSize:"15px",marginBottom:"24px",padding:0}}>{"\u2190 Back to all entries"}</button>
@@ -188,10 +200,7 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
             {entry.tags.map((tag) => <span key={tag} style={{fontSize:"13px",background:"var(--accent-light)",color:"var(--accent-text)",padding:"4px 14px",borderRadius:"20px",fontWeight:500}}>{tag}</span>)}
           </div>
           <div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"12px"}}>
-              <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"18px"}}>{cat.label}</h3>
-              <button onClick={handleCopy} style={{fontSize:"13px",background:"var(--accent-light)",color:"var(--accent-text)",padding:"8px 16px",borderRadius:"8px",fontWeight:500,border:"none"}}>{copied ? "Copied!" : "Copy to Clipboard"}</button>
-            </div>
+            <h3 style={{fontWeight:700,color:"var(--text)",fontSize:"18px",marginBottom:"12px"}}>{cat.label}</h3>
             <div style={{lineHeight:1.6,overflowX:"auto"}} dangerouslySetInnerHTML={{__html: renderMd(entry.content)}} />
           </div>
           {entry.tips && (
