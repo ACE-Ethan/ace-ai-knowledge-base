@@ -23,6 +23,10 @@ function parseTags(t) {
       try { var p = JSON.parse(joined); if (Array.isArray(p)) return p.map(String); } catch(e) {}
     }
     return clean(t);
+
+function slugify(s) {
+  return (s || "").toString().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+}
   }
   if (typeof t === "string") {
     var s = t.trim();
@@ -221,6 +225,7 @@ function EntryDetail({ entry, onBack, onVote, onEdit, onDelete, userVotes }) {
             <span style={{fontSize:"28px"}}>{cat.icon}</span>
             <span style={{fontSize:"13px",fontWeight:600,background:"rgba(255,255,255,0.2)",padding:"4px 14px",borderRadius:"20px"}}>{cat.label}</span>
             <VoteButtons votes={entry.votes} onVote={(d) => onVote(entry.id,d)} userVote={userVotes[entry.id]||0} />
+            <button onClick={(e) => { e.stopPropagation(); var url = window.location.origin + window.location.pathname + "#" + slugify(entry.title); navigator.clipboard.writeText(url).then(() => { var b = e.currentTarget; var o = b.textContent; b.textContent = "Copied!"; setTimeout(() => { b.textContent = o; }, 1500); }); }} style={{marginLeft:"auto",background:"rgba(255,255,255,0.15)",border:"none",borderRadius:"6px",padding:"6px 12px",color:"white",fontSize:"12px",fontWeight:500,cursor:"pointer"}}>🔗 Copy link</button>
           </div>
           <h2 style={{fontSize:"26px",fontWeight:700,margin:"0 0 8px 0"}}>{entry.title}</h2>
           <p style={{color:"rgba(255,255,255,0.7)",margin:"0 0 16px 0",fontSize:"15px"}}>{entry.description}</p>
@@ -397,6 +402,29 @@ function App() {
     }
   },[]);
 
+  // URL hash ↔ selected entry routing
+  useEffect(() => {
+    function fromHash() {
+      var slug = decodeURIComponent((window.location.hash || "").replace(/^#/, ""));
+      if (!slug) { setSelected(null); return; }
+      var match = entries.find(function(e) { return slugify(e.title) === slug; });
+      setSelected(match || null);
+    }
+    fromHash();
+    window.addEventListener("hashchange", fromHash);
+    return function() { window.removeEventListener("hashchange", fromHash); };
+  }, [entries]);
+
+  function openEntry(entry) {
+    var slug = slugify(entry.title);
+    if (slug && ("#" + slug) !== window.location.hash) window.location.hash = "#" + slug;
+    else setSelected(entry);
+  }
+  function closeEntry() {
+    if (window.location.hash) history.pushState(null, "", window.location.pathname + window.location.search);
+    setSelected(null);
+  }
+
   function handleVote(id, direction) {
     const prev = userVotes[id] || 0;
     if (prev === direction) {
@@ -426,7 +454,7 @@ function App() {
     setView("list");
     if (!ok) showToast("Entry saved for this session but could not sync to team database.");
   }
-  function handleEdit(entry){setEditEntry(entry);setView("edit");setSelected(null)}
+  function handleEdit(entry){setEditEntry(entry);setView("edit");closeEntry();}
   async function handleEditSubmit(updated){
     setSaving(true);
     setEntries(entries.map((e) => e.id === updated.id ? updated : e));
@@ -438,7 +466,7 @@ function App() {
   }
   async function handleDelete(id){
     setEntries(entries.filter((e) => e.id !== id));
-    setSelected(null);
+    closeEntry();
     const ok = await postAction("delete",{id});
     if (!ok) showToast("Could not delete from team database. Refresh to see current state.");
   }
@@ -466,7 +494,7 @@ function App() {
   var selStyle = {flex:"1 1 130px",border:"1px solid var(--border2)",borderRadius:"8px",padding:"10px 12px",fontSize:"14px",background:"var(--surface)",color:"var(--text)",outline:"none"};
 
   if(loading) return (<div style={{minHeight:"100vh",background:"var(--bg)",display:"flex",alignItems:"center",justifyContent:"center"}}><Toast toast={toast} onClose={() => setToast(null)} /><p style={{color:"var(--text2)",fontSize:"16px"}}>Loading knowledge base...</p></div>);
-  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryDetail entry={selected} onBack={() => setSelected(null)} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
+  if(selected) return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryDetail entry={selected} onBack={closeEntry} onVote={handleVote} onEdit={handleEdit} onDelete={handleDelete} userVotes={userVotes} /></div>);
   if(view === "add") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleAdd} onCancel={() => setView("list")} saving={saving} /></div>);
   if(view === "edit") return (<div style={{minHeight:"100vh",background:"var(--bg)",padding:"24px"}}><Toast toast={toast} onClose={() => setToast(null)} /><EntryForm onSubmit={handleEditSubmit} onCancel={() => {setView("list");setEditEntry(null)}} existing={editEntry} saving={saving} /></div>);
 
@@ -526,7 +554,7 @@ function App() {
           </div>
         ) : (
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(340px,1fr))",gap:"20px"}}>
-            {filtered.map((entry) => <EntryCard key={entry.id} entry={entry} onClick={setSelected} onVote={handleVote} userVotes={userVotes} />)}
+            {filtered.map((entry) => <EntryCard key={entry.id} entry={entry} onClick={openEntry} onVote={handleVote} userVotes={userVotes} />)}
           </div>
         )}
       </div>
