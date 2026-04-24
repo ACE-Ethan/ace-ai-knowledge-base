@@ -23,11 +23,6 @@ function parseTags(t) {
       try { var p = JSON.parse(joined); if (Array.isArray(p)) return p.map(String); } catch(e) {}
     }
     return clean(t);
-
-function slugify(s) {
-  return (s || "").toString().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
-}
-  }
   if (typeof t === "string") {
     var s = t.trim();
     if (!s) return [];
@@ -37,6 +32,10 @@ function slugify(s) {
     return clean(s.split(","));
   }
   return [];
+}
+
+function slugify(s) {
+  return (s || "").toString().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 }
 if (typeof window !== "undefined" && typeof document !== "undefined" && !window.__aceKbCopyInit) {
   window.__aceKbCopyInit = true;
