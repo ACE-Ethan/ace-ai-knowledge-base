@@ -23,6 +23,7 @@ function parseTags(t) {
       try { var p = JSON.parse(joined); if (Array.isArray(p)) return p.map(String); } catch(e) {}
     }
     return clean(t);
+  }
   if (typeof t === "string") {
     var s = t.trim();
     if (!s) return [];
